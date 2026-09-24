@@ -606,7 +606,7 @@ export const home: HomeData = {
   pulse: [
     { label: "น้ำมัน WTI", metric: "WTI.ret_1d" },
     { label: "S&P 500", metric: "SPX.ret_1d" },
-    { label: "ทองคำ", metric: "GOLD.ret_1d" },
+    { label: "ทองคำ", metric: "XAU.ret_1d" },
     { label: "บอนด์ 10 ปี", metric: "US10Y.chg_bps" },
   ],
   signs: [
