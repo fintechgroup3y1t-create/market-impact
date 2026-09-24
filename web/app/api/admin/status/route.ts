@@ -23,16 +23,19 @@ export async function GET(request: Request) {
       const db = getDb();
       await db.execute(sql`select 1`);
       result.databaseReachable = true;
+      const metricRows = await db.select().from(marketMetrics);
       result.tableCounts = {
         events: (await db.select().from(events)).length,
         entities: (await db.select().from(entities)).length,
-        marketMetrics: (await db.select().from(marketMetrics)).length,
+        marketMetrics: metricRows.length,
       };
+      // แสดงรายละเอียดตัวเลขล่าสุดเพื่อไล่ปัญหา (ไม่ใช่ข้อมูลลับ แค่ตัวเลขตลาด)
+      result.marketMetricsDetail = metricRows.map((r) => `${r.entityKey}.${r.metric}=${r.value} (${r.asOfDate})`);
     } catch (err) {
       result.databaseReachable = false;
       result.databaseError = err instanceof Error ? err.message : String(err);
     }
   }
 
-  return NextResponse.json(result);
+  return NextResponse.json(result, { headers: { "Cache-Control": "no-store" } });
 }

@@ -88,10 +88,13 @@ export async function GET(request: Request) {
     await upsertMetric(group.key, "ret_1d", avg, "pct", asOfDate);
   }
 
-  return NextResponse.json({
-    ok: errors.length === 0,
-    asOfDate,
-    fetched: Object.keys(returns).length,
-    errors,
-  });
+  return NextResponse.json(
+    {
+      ok: errors.length === 0,
+      asOfDate,
+      fetched: Object.keys(returns).length,
+      errors,
+    },
+    { headers: { "Cache-Control": "no-store" } },
+  );
 }
