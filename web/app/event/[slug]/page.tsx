@@ -9,18 +9,19 @@ import { WithGlossary } from "@/components/Glossary";
 import { lineVar } from "@/components/LineBadge";
 import { T } from "@/components/Metric";
 import { Sources } from "@/components/Sources";
-import { getEvent, getEvidence, getExposure, getLine, getMetrics, publishedEvents } from "@/lib/data";
+import { getEvent, getEvidence, getExposure, getLine, getMetrics } from "@/lib/data";
 import { fillTemplate, thaiTime } from "@/lib/format";
 import { EXPOSURE_SHORT } from "@/lib/labels";
 import type { ClaimKind } from "@/lib/types";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export async function generateStaticParams() {
-  const events = await publishedEvents();
-  return events.map((e) => ({ slug: e.slug }));
+// ไม่ prerender ตอน build เลย (ต้องคุย DB ข้ามภูมิภาคกับเครื่อง build ของ Vercel ซึ่งช้าเกินเวลาที่กำหนดตอน build)
+// หน้าจะสร้างตอนมีคนเข้าดูครั้งแรกแทน แล้วแคชไว้ตาม revalidate ด้านล่าง
+export function generateStaticParams() {
+  return [];
 }
-export const dynamicParams = true; // เหตุการณ์ใหม่จากหน้าแอดมินอาจยังไม่ถูก prerender ไว้ตอน build
+export const dynamicParams = true;
 
 // ราคาที่แสดงมาจากฐานข้อมูล อัปเดตทุกคืนผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
 export const revalidate = 1800;

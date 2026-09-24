@@ -8,8 +8,9 @@ import { fillTemplate } from "@/lib/format";
 
 export const metadata: Metadata = { title: "ค้นหุ้น" };
 
-// ราคาที่แสดงมาจากฐานข้อมูล อัปเดตทุกคืนผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
-export const revalidate = 1800;
+// เดินผ่านทุกบริษัทเพื่อหาเหตุการณ์ที่เกี่ยวข้อง (storiesForTicker) ทำให้ prerender ตอน build ช้าเกิน 60 วิที่ Vercel กำหนด
+// (ต้องคุย DB ข้ามภูมิภาคหลายรอบ) เปลี่ยนเป็นสร้างตอนมีคนเข้าดูจริงแทน
+export const dynamic = "force-dynamic";
 
 export default async function SearchPage() {
   const metrics = await getMetrics();
