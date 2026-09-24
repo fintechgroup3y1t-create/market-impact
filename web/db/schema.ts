@@ -209,7 +209,7 @@ export const claimEvidence = pgTable(
   (t) => [unique().on(t.claimId, t.evidenceId)],
 );
 
-/** ราคาปิดรายวัน ดึงจาก Finnhub (หรือ ETF ตัวแทนสำหรับดัชนี/โภคภัณฑ์) */
+/** ราคาปิดรายวัน ดึงจาก Tiingo (หรือ ETF ตัวแทนสำหรับดัชนี/โภคภัณฑ์) */
 export const prices = pgTable(
   "prices",
   {

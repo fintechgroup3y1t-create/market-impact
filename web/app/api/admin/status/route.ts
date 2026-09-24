@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
   const result: Record<string, unknown> = {
     databaseUrlSet: isDatabaseConfigured(),
-    finnhubKeySet: Boolean(process.env.FINNHUB_API_KEY),
+    tiingoKeySet: Boolean(process.env.TIINGO_API_KEY),
     cronSecretSet: Boolean(process.env.CRON_SECRET),
   };
 

@@ -1,12 +1,12 @@
 // งานตามเวลา (Vercel Cron) ดึงราคาปิดของหุ้นที่ครอบคลุมทั้งหมด + proxy ticker ของดัชนี/โภคภัณฑ์
 // แล้วคำนวณ ret_1d และ ผลต่างจากตลาด (abnormal return แบบง่าย = ret_1d ของหุ้น - ret_1d ของ SPY)
-// ทำงานได้เฉพาะเมื่อตั้งค่า DATABASE_URL และ FINNHUB_API_KEY แล้วเท่านั้น (ไม่ทำให้เว็บพังถ้ายังไม่ตั้งค่า)
+// ทำงานได้เฉพาะเมื่อตั้งค่า DATABASE_URL และ TIINGO_API_KEY แล้วเท่านั้น (ไม่ทำให้เว็บพังถ้ายังไม่ตั้งค่า)
 
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb, isDatabaseConfigured } from "@/db/client";
 import { entities, marketMetrics, prices } from "@/db/schema";
-import { getQuote, MARKET_BENCHMARK_KEY, PROXY_TICKERS, pctReturn, SECTOR_GROUPS, sleep } from "@/lib/prices/finnhub";
+import { getQuote, MARKET_BENCHMARK_KEY, PROXY_TICKERS, pctReturn, SECTOR_GROUPS, sleep } from "@/lib/prices/tiingo";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -43,8 +43,8 @@ export async function GET(request: Request) {
   if (!isDatabaseConfigured()) {
     return NextResponse.json({ error: "ยังไม่ได้ตั้งค่า DATABASE_URL" }, { status: 503 });
   }
-  if (!process.env.FINNHUB_API_KEY) {
-    return NextResponse.json({ error: "ยังไม่ได้ตั้งค่า FINNHUB_API_KEY" }, { status: 503 });
+  if (!process.env.TIINGO_API_KEY) {
+    return NextResponse.json({ error: "ยังไม่ได้ตั้งค่า TIINGO_API_KEY" }, { status: 503 });
   }
 
   const db = getDb();
@@ -69,7 +69,7 @@ export async function GET(request: Request) {
     } catch (err) {
       errors.push(err instanceof Error ? err.message : String(err));
     }
-    await sleep(1100); // แผนฟรี Finnhub จำกัด 60 ครั้ง/นาที เว้นจังหวะให้ปลอดภัย
+    await sleep(250); // แผนฟรี Tiingo จำกัดเป็นรายชั่วโมง เว้นจังหวะสั้น ๆ ให้สุภาพ
   }
 
   const marketReturn = returns[MARKET_BENCHMARK_KEY];
