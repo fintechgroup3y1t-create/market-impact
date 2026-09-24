@@ -1,0 +1,723 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Market Impact — ตัวอย่างแบบผสม</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Anuphan:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --chalk:#EEF1F4;--paper:#FFFFFF;--ink:#0F1B2D;--ink2:#4A5568;--rule:#D5DBE3;--navy:#1B2A4A;
+  --a:#6B4EFF;--b:#0E8F9B;--c:#C8327C;--pos:#15803D;--neg:#C8261E;--mix:#A16207;
+  color-scheme:light;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--chalk:#0D1420;--paper:#151F2E;--ink:#E8EDF4;--ink2:#A3AEBD;--rule:#2A3647;--navy:#34497A;
+  --a:#9380FF;--b:#2BBAC6;--c:#EC5FA2;--pos:#46C27A;--neg:#F2675E;--mix:#E2A93B;color-scheme:dark}
+}
+:root[data-theme="dark"]{--chalk:#0D1420;--paper:#151F2E;--ink:#E8EDF4;--ink2:#A3AEBD;--rule:#2A3647;--navy:#34497A;
+  --a:#9380FF;--b:#2BBAC6;--c:#EC5FA2;--pos:#46C27A;--neg:#F2675E;--mix:#E2A93B;color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--chalk)}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;background:var(--chalk);color:var(--ink);font-family:Anuphan,"Noto Sans Thai",Tahoma,sans-serif;font-size:15px;line-height:1.65;-webkit-text-size-adjust:100%}
+a{color:var(--a)}
+button{font-family:inherit;color:inherit}
+:focus-visible{outline:3px solid var(--a);outline-offset:2px;border-radius:6px}
+.disp{font-family:"Chakra Petch",Anuphan,sans-serif}
+.muted{color:var(--ink2)}
+.wrap{max-width:460px;margin:0 auto;padding:0 20px}
+.demo{font-size:12px;color:var(--ink2);text-align:center;padding:8px 20px 0}
+.screen{display:none;padding-bottom:calc(96px + env(safe-area-inset-bottom,0px))}
+.screen.on{display:block}
+h2{font-family:"Chakra Petch",Anuphan,sans-serif;font-size:20px;font-weight:700;margin:0;line-height:1.3}
+p{margin:0}
+
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;padding-top:10px}
+.brand{display:flex;align-items:center;gap:10px;font-family:"Chakra Petch";font-weight:700;font-size:17px}
+.iconbtn{width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:14px;color:var(--ink);background:var(--paper);border:1px solid var(--rule);text-decoration:none}
+
+/* home */
+.date{margin-top:22px;font-size:13px;color:var(--ink2)}
+.mood{font-family:"Chakra Petch",Anuphan,sans-serif;font-size:38px;font-weight:700;line-height:1.15;margin:6px 0 0;letter-spacing:-.01em}
+.pulse{display:flex;margin:22px -20px 0;padding:0 20px;overflow-x:auto;gap:0;scrollbar-width:none}
+.pulse::-webkit-scrollbar{display:none}
+.pulse div{flex:0 0 auto;padding:0 18px 0 0;margin-right:18px;border-right:1px solid var(--rule);display:flex;flex-direction:column}
+.pulse div:last-child{border-right:none}
+.pulse span{font-size:12px;color:var(--ink2);white-space:nowrap}
+.pulse b{font-family:"Chakra Petch";font-size:19px;font-weight:600;white-space:nowrap}
+.up{color:var(--pos)}.down{color:var(--neg)}
+
+.mapcard{margin-top:28px;background:var(--paper);border-radius:28px;padding:22px 18px 18px;border:1px solid var(--rule)}
+.mapcard p.hint{font-size:13px;color:var(--ink2);margin-top:4px}
+.chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.chip{min-height:40px;display:flex;align-items:center;gap:8px;padding:0 14px;border-radius:999px;border:1.5px solid var(--rule);background:transparent;font-size:14px;font-weight:600;cursor:pointer}
+.chip i{width:14px;height:6px;border-radius:3px;background:var(--lc)}
+.chip[aria-pressed="true"]{border-color:var(--lc);background:color-mix(in srgb,var(--lc) 12%,transparent)}
+
+.map{width:100%;height:auto;display:block;margin-top:10px}
+.map .guide{stroke:var(--rule);stroke-width:1;stroke-dasharray:2 5}
+.map .rowlab{font-size:11px;fill:var(--ink2);font-family:Anuphan}
+.map .line{cursor:pointer;transition:opacity .25s}
+.map .hit{fill:none;stroke:transparent;stroke-width:28}
+.map .trk{fill:none;stroke:var(--lc);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1s cubic-bezier(.4,0,.2,1) var(--d) forwards}
+.map .st{fill:var(--paper);stroke:var(--lc);stroke-width:3.5}
+.map .term{fill:var(--lc)}
+.map .dot{fill:var(--paper)}
+.map .lab{font-size:11.5px;font-family:Anuphan;fill:var(--ink);stroke:var(--paper);stroke-width:5px;paint-order:stroke;stroke-linejoin:round}
+.map .stk{fill:var(--paper);stroke-width:2.5}
+.map .stk.pos{stroke:var(--pos)}.map .stk.neg{stroke:var(--neg)}.map .stk.mix{stroke:var(--mix);stroke-dasharray:4 3}
+.map .tk{font-family:"Chakra Petch";font-weight:700;font-size:13px;fill:var(--ink)}
+.map .ex{font-size:11px;font-weight:600;font-family:Anuphan}
+.map .ex.pos{fill:var(--pos)}.map .ex.neg{fill:var(--neg)}.map .ex.mix{fill:var(--mix)}
+.map .pop{opacity:0;animation:pop .35s ease-out calc(var(--d) + .75s) forwards}
+.map.pick-a .line:not([data-line="a"]),.map.pick-b .line:not([data-line="b"]),.map.pick-c .line:not([data-line="c"]){opacity:.14}
+@keyframes draw{to{stroke-dashoffset:0}}
+@keyframes pop{to{opacity:1}}
+@media (prefers-reduced-motion: reduce){.map .trk{animation:none;stroke-dashoffset:0}.map .pop{animation:none;opacity:1}.map .line{transition:none}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink2);margin-top:6px}
+.legend span{display:flex;align-items:center;gap:6px}
+.legend i{width:16px;height:10px;border-radius:5px;border:2px solid}
+
+.sign{margin-top:16px;border-radius:20px;overflow:hidden;background:var(--chalk)}
+.sign .band{background:var(--lc);color:#fff;font-weight:600;font-size:13px;padding:8px 16px;display:flex;align-items:center;gap:8px}
+.sign .band svg{flex:none}
+.sign .body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:10px}
+.sign h3{margin:0;font-family:"Chakra Petch",Anuphan,sans-serif;font-size:20px;font-weight:700;line-height:1.3}
+.eff{display:flex;flex-direction:column;gap:6px}
+.eff div{display:flex;align-items:baseline;gap:10px;font-size:14px}
+.cta{min-height:50px;display:flex;align-items:center;justify-content:center;border-radius:14px;background:var(--navy);color:#fff;font-weight:600;font-size:15px;text-decoration:none}
+.small{font-size:12px;color:var(--ink2)}
+
+.pill{font-size:12px;font-weight:600;padding:2px 10px;border-radius:999px;white-space:nowrap;border:1.5px solid currentColor}
+.pill.pos{color:var(--pos)}.pill.neg{color:var(--neg)}.pill.mix{color:var(--mix);border-style:dashed}
+
+.list{margin-top:12px;border-top:1px solid var(--rule)}
+.item{display:flex;gap:12px;padding:14px 0;border-bottom:1px solid var(--rule);text-decoration:none;color:var(--ink);min-height:44px;align-items:flex-start}
+.item .bar{width:6px;align-self:stretch;border-radius:3px;background:var(--lc,var(--rule));flex:none}
+.item b{display:block;font-weight:600;line-height:1.5}
+.sec{margin-top:36px}
+
+/* event */
+.bar2{display:flex;align-items:center;gap:8px;padding-top:6px}
+.back{width:44px;height:44px;display:flex;align-items:center;justify-content:center;margin-left:-12px;color:var(--ink)}
+.linebadge{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;padding:5px 12px 5px 6px;border-radius:999px;background:color-mix(in srgb,var(--lc) 14%,transparent);color:var(--ink)}
+.linebadge i{width:18px;height:18px;border-radius:50%;background:var(--lc);display:flex;align-items:center;justify-content:center}
+.linebadge i::after{content:"";width:6px;height:6px;border-radius:50%;background:var(--paper)}
+.title{font-family:"Chakra Petch",Anuphan,sans-serif;font-size:32px;font-weight:700;line-height:1.2;margin:14px 0 8px}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px;background:var(--paper);border:1px solid var(--rule);border-radius:16px;margin-top:22px}
+.lv{min-height:54px;border:none;border-radius:12px;background:transparent;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.3}
+.lv b{font-size:15px}.lv span{font-size:11px;color:var(--ink2)}
+.lv[aria-pressed="true"]{background:var(--navy);color:#fff}.lv[aria-pressed="true"] span{color:#C9D3EA}
+[data-show]{display:none}[data-show].on{display:block}
+.qa-list{margin-top:18px;display:flex;flex-direction:column;gap:18px}
+.qa-list h3{margin:0;font-size:15px;font-weight:700}
+.qa-list p{margin-top:4px}
+.gloss{border-bottom:2px dotted var(--a);font-weight:600}
+.def{margin-top:8px;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--a) 9%,transparent);font-size:14px}
+
+.routes{display:flex;gap:8px;margin-top:12px}
+.chain{margin-top:18px}
+.stn{display:grid;grid-template-columns:34px 1fr;column-gap:12px}
+.rail{display:flex;flex-direction:column;align-items:center}
+.rail .c{width:20px;height:20px;border-radius:50%;border:4px solid var(--lc);background:var(--paper);margin-top:4px;flex:none}
+.rail .c.t{background:var(--lc)}
+.rail .s{flex:1;width:0;border-left:6px solid var(--lc);margin:2px 0}
+.rail .s.dashed{border-left-style:dashed}
+.stn .txt{padding-bottom:22px}
+.stn .ly{font-size:12px;color:var(--ink2)}
+.stn .nm{font-weight:700;font-size:16px;line-height:1.4}
+.stn .ds{font-size:14px;margin-top:2px}
+.stn .cf{font-size:12px;font-weight:600;margin-top:4px}
+.stkchip{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:14px;background:var(--paper);border:2.5px solid;text-decoration:none;color:var(--ink);min-height:44px}
+.stkchip b{font-family:"Chakra Petch";font-size:20px}
+.stkchip.pos{border-color:var(--pos)}.stkchip.neg{border-color:var(--neg)}
+.keys{display:flex;flex-direction:column;gap:6px;margin-top:6px;font-size:12px;color:var(--ink2);padding:12px 14px;border-radius:14px;background:var(--paper);border:1px solid var(--rule)}
+.keys span{display:flex;align-items:center;gap:10px}
+.keys i{width:26px;border-top:5px solid var(--a)}
+.keys i.d{border-top-style:dashed}
+
+.fau{margin-top:14px;background:var(--paper);border-radius:22px;border:1px solid var(--rule);padding:4px 18px}
+.fau .r{display:grid;grid-template-columns:22px 1fr;gap:12px;padding:14px 0;border-bottom:1px solid var(--rule)}
+.fau .r:last-child{border-bottom:none}
+.fau .k{font-size:13px;font-weight:700}
+.fau .s2{font-size:12px;color:var(--ink2);margin-top:2px}
+.mk{width:16px;height:16px;border-radius:50%;margin-top:4px}
+.mk.f{background:var(--ink)}.mk.a{border:3px solid var(--ink)}.mk.u{border:3px dashed var(--mix)}
+
+details.q{border-bottom:1px solid var(--rule)}
+details.q summary{min-height:52px;display:flex;align-items:center;gap:12px;font-weight:600;cursor:pointer;list-style:none;padding:10px 0}
+details.q summary::-webkit-details-marker{display:none}
+details.q summary::after{content:"";margin-left:auto;flex:none;width:10px;height:10px;border-right:2.5px solid var(--ink2);border-bottom:2.5px solid var(--ink2);transform:rotate(45deg);transition:transform .2s}
+details.q[open] summary::after{transform:rotate(-135deg)}
+details.q .ans{padding:0 0 14px;font-size:14px}
+details.q .ans .small{display:block;margin-top:6px}
+@media (prefers-reduced-motion: reduce){details.q summary::after{transition:none}}
+
+.tl{margin-top:14px}
+.tl .row{display:grid;grid-template-columns:64px 1fr;gap:12px;padding:8px 0;border-left:0}
+.tl .when{font-family:"Chakra Petch";font-size:13px;color:var(--ink2)}
+
+.stk-row{display:flex;align-items:center;gap:14px;padding:12px 0;border-bottom:1px solid var(--rule);text-decoration:none;color:var(--ink);min-height:52px}
+.stk-row b{font-family:"Chakra Petch";font-size:18px;width:56px}
+.stk-row span.w{flex:1;font-size:13px;color:var(--ink2)}
+.src-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--rule)}
+.src-row div{flex:1}
+.src-row a{font-size:14px;font-weight:600;min-height:44px;display:flex;align-items:center}
+
+/* why */
+.tick{font-family:"Chakra Petch";font-size:52px;font-weight:700;line-height:1;margin-top:18px}
+.conf{margin-top:18px;padding:16px;border-radius:20px;background:var(--paper);border:1px solid var(--rule)}
+.confline{display:flex;align-items:center;margin:12px 0 8px}
+.confline .n{width:18px;height:18px;border-radius:50%;border:4px solid var(--neg);background:var(--neg);flex:none}
+.confline .n.o{background:var(--paper);border-style:dashed;border-color:var(--mix)}
+.confline .g{flex:1;height:5px;background:var(--neg)}
+.confline .g.o{background:none;border-top:5px dashed var(--mix);height:0}
+.layer{display:grid;grid-template-columns:22px 1fr;gap:12px;padding:16px 0;border-bottom:1px solid var(--rule)}
+.layer .kv{display:flex;justify-content:space-between;gap:10px;font-size:14px;margin-top:6px}
+.layer .kv b{font-family:"Chakra Petch";font-weight:600}
+.note{margin-top:24px;padding:18px;border-radius:20px;background:var(--navy);color:#fff;font-size:14px}
+
+/* search & calendar */
+.field{margin-top:18px;display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;font-weight:600}
+.field input{min-height:52px;border-radius:16px;border:1.5px solid var(--rule);padding:0 16px;font-family:inherit;font-size:16px;background:var(--paper);color:var(--ink)}
+#sugg{margin-top:8px;background:var(--paper);border-radius:16px;border:1px solid var(--rule);overflow:hidden}
+#sugg:empty{display:none}
+#sugg a,#sugg div{display:flex;align-items:center;gap:10px;padding:12px 16px;min-height:48px;text-decoration:none;color:var(--ink);border-bottom:1px solid var(--rule);font-size:14px}
+#sugg > :last-child{border-bottom:none}
+#sugg b{font-family:"Chakra Petch";font-size:16px}
+#sugg .pill{margin-left:auto}
+
+.day{margin-top:30px;font-family:"Chakra Petch";font-size:15px;font-weight:600;color:var(--ink2)}
+.ev{display:grid;grid-template-columns:56px 1fr;gap:14px;padding:16px 0;border-bottom:1px solid var(--rule)}
+.ev .when{font-family:"Chakra Petch";font-weight:600;font-size:14px}
+.ev .nm{font-weight:700;font-size:16px;line-height:1.45}
+.ev .lk{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-top:4px}
+.ev .lk i{width:14px;height:6px;border-radius:3px;background:var(--lc)}
+.ev .vals{display:flex;gap:18px;font-size:13px;margin-top:6px}
+.ev .vals b{font-family:"Chakra Petch"}
+.tag{font-size:12px;font-weight:600;color:var(--ink2)}
+
+/* tab bar */
+.tabbar{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;justify-content:center;gap:6px;padding:8px 12px calc(8px + env(safe-area-inset-bottom,0px));background:color-mix(in srgb,var(--paper) 94%,transparent);border-top:1px solid var(--rule);backdrop-filter:blur(8px)}
+.tabbar a{flex:1;max-width:140px;min-height:52px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:14px;text-decoration:none;color:var(--ink2);font-size:12px}
+.tabbar a.on{color:var(--ink);font-weight:600;background:color-mix(in srgb,var(--a) 12%,transparent)}
+.foot{margin-top:40px;font-size:12px;color:var(--ink2);text-align:center}
+
+/* hybrid: journey (quests + xp) */
+.journey{margin-top:24px;background:var(--paper);border:1px solid var(--rule);border-radius:24px;padding:16px 18px 18px}
+.jhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.streak{display:inline-flex;align-items:center;gap:6px;font-family:"Chakra Petch";font-weight:700;font-size:15px}
+.lvl{font-size:12px;color:var(--ink2);text-align:right}
+.lvl b{font-family:"Chakra Petch";color:var(--ink);font-size:14px}
+.jtitle{font-family:"Chakra Petch";font-weight:700;font-size:17px;margin-top:12px}
+.jtrack{position:relative;margin:18px 14px 0;height:8px;border-radius:4px;background:var(--rule)}
+.jfill{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:4px;background:var(--a);transition:width .6s cubic-bezier(.3,1.3,.5,1)}
+.jst{position:absolute;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:var(--paper);border:4px solid var(--rule);transition:border-color .3s,background .3s,transform .3s}
+.jst.done{border-color:var(--a);background:var(--a);transform:scale(1.1)}
+.jst.done::after{content:"";position:absolute;left:6px;top:4px;width:6px;height:10px;border-right:3px solid #fff;border-bottom:3px solid #fff;transform:rotate(40deg)}
+.jlabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;font-size:12px;line-height:1.4}
+.jlabs div{display:flex;flex-direction:column;gap:2px}
+.jlabs div:nth-child(2){text-align:center}.jlabs div:nth-child(3){text-align:right}
+.jlabs b{font-size:13px}.jlabs span{color:var(--ink2)}
+.jlabs .ok b{text-decoration:line-through;color:var(--ink2)}
+
+.quiz{margin-top:28px;background:var(--paper);border:1px solid var(--rule);border-radius:28px;padding:20px 18px}
+.quiz .kick{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;color:var(--a);padding:3px 10px;border-radius:999px;background:color-mix(in srgb,var(--a) 12%,transparent)}
+.quiz h2{margin-top:10px}
+.opts{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.opt{min-height:54px;border-radius:16px;border:2px solid var(--rule);background:var(--paper);box-shadow:0 4px 0 var(--rule);font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:12px;padding:0 16px;text-align:left;transition:transform .08s,box-shadow .08s}
+.opt:active{transform:translateY(4px);box-shadow:0 0 0 var(--rule)}
+.opt i{width:12px;height:12px;border-radius:50%;border:3px solid var(--ink2);flex:none}
+.opt.right{border-color:var(--pos);box-shadow:0 4px 0 var(--pos);background:color-mix(in srgb,var(--pos) 10%,var(--paper))}
+.opt.right i{background:var(--pos);border-color:var(--pos)}
+.opt.wrong{border-color:var(--neg);box-shadow:0 4px 0 var(--neg);background:color-mix(in srgb,var(--neg) 8%,var(--paper))}
+.opt.wrong i{border-color:var(--neg)}
+.opt:disabled{cursor:default}
+.fb{display:none;margin-top:14px;font-size:14px}
+.fb.on{display:block}
+.fb b{font-family:"Chakra Petch";font-size:18px;display:block}
+.toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translate(-50%,16px);opacity:0;background:var(--navy);color:#fff;font-weight:600;font-size:14px;padding:10px 18px;border-radius:999px;transition:opacity .25s,transform .25s;z-index:20;pointer-events:none;white-space:nowrap;display:flex;align-items:center;gap:8px}
+.toast b{font-family:"Chakra Petch";color:#FFD166}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+@media (prefers-reduced-motion: reduce){.jfill,.jst,.toast,.opt{transition:none}}
+</style>
+</head>
+<body>
+<p class="demo">ตัวอย่างแบบผสม แผนที่รถไฟฟ้า + องค์ประกอบเกม ข้อมูลในหน้านี้เป็นข้อมูลสมมติ</p>
+
+<!-- HOME -->
+<section class="screen" id="s-home"><div class="wrap">
+  <header class="top">
+    <div class="brand">
+      <svg width="30" height="30" viewBox="0 0 30 30" aria-hidden="true"><path d="M6 4V26" stroke="var(--a)" stroke-width="4" stroke-linecap="round"/><path d="M15 4V14L24 23V26" stroke="var(--b)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/><circle cx="6" cy="15" r="3.5" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/><circle cx="15" cy="10" r="3.5" fill="var(--paper)" stroke="var(--ink)" stroke-width="2"/></svg>
+      Market Impact
+    </div>
+    <a href="#search" class="iconbtn" aria-label="ค้นหาหุ้น"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></a>
+  </header>
+
+  <p class="date">พฤหัสบดี 24 กันยายน, อัปเดต [เวลา]</p>
+  <h1 class="mood">ตลาดวันนี้กังวลเรื่องน้ำมันแพง</h1>
+
+  <div class="pulse" aria-label="ภาพรวมตลาด ข้อมูลล่าช้า 15 นาที">
+    <div><span>น้ำมัน WTI</span><b class="up">▲ x.x%</b></div>
+    <div><span>S&amp;P 500</span><b class="down">▼ x.x%</b></div>
+    <div><span>ทองคำ</span><b class="up">▲ x.x%</b></div>
+    <div><span>บอนด์ 10 ปี</span><b>▲ x bps</b></div>
+  </div>
+
+
+  <section class="journey" aria-labelledby="jh">
+    <div class="jhead">
+      <span class="streak"><svg width="18" height="20" viewBox="0 0 20 22" aria-hidden="true"><path d="M10 1C11 6 17 8 17 14a7 7 0 0 1-14 0c0-3 2-5 3-6 0 2 1 3 2 3 0-4 1-7 2-10z" fill="#F97316"/><path d="M10 11c1 2 3 3 3 5a3 3 0 0 1-6 0c0-1.5 1-2.5 3-5z" fill="#FDBA3B"/></svg>อ่านต่อเนื่อง 5 วัน</span>
+      <span class="lvl">เลเวล 3 นักสังเกตตลาด<br><b id="xpText">120 / 300 XP</b></span>
+    </div>
+    <p class="jtitle" id="jh">เส้นทางเรียนรู้วันนี้</p>
+    <div class="jtrack" aria-hidden="true"><span class="jfill" id="jfill"></span>
+      <span class="jst" id="js1" style="left:0%"></span><span class="jst" id="js2" style="left:50%"></span><span class="jst" id="js3" style="left:100%"></span>
+    </div>
+    <div class="jlabs">
+      <div id="jl1"><b>สำรวจครบ 3 สาย</b><span id="jl1c">0 จาก 3, +40 XP</span></div>
+      <div id="jl2"><b>ตอบคำถามทายผล</b><span>+30 XP</span></div>
+      <div id="jl3"><b>เปิดดูหลักฐาน</b><span>+10 XP</span></div>
+    </div>
+  </section>
+
+  <section class="mapcard" aria-labelledby="maph">
+    <h2 id="maph">แผนที่ผลกระทบวันนี้</h2>
+    <p class="hint">แต่ละสีคือหนึ่งเรื่องในตลาด แตะเพื่อดูว่าเรื่องนั้นไหลไปกระทบใคร</p>
+    <div class="chips" role="group" aria-label="เลือกเรื่อง">
+      <button class="chip" data-pick="a" style="--lc:var(--a)" aria-pressed="true"><i></i>น้ำมัน</button>
+      <button class="chip" data-pick="b" style="--lc:var(--b)" aria-pressed="false"><i></i>เงินเฟ้อ</button>
+      <button class="chip" data-pick="c" style="--lc:var(--c)" aria-pressed="false"><i></i>ดอลลาร์</button>
+    </div>
+
+    <svg class="map pick-a" id="map" viewBox="0 0 350 412" role="img" aria-label="แผนที่เส้นทางผลกระทบจากเหตุการณ์ไปสู่หุ้น">
+      <line class="guide" x1="62" y1="44" x2="350" y2="44"/><line class="guide" x1="62" y1="144" x2="350" y2="144"/>
+      <line class="guide" x1="62" y1="264" x2="350" y2="264"/><line class="guide" x1="62" y1="364" x2="350" y2="364"/>
+      <text class="rowlab" x="0" y="48">เหตุการณ์</text><text class="rowlab" x="0" y="148">เศรษฐกิจ</text>
+      <text class="rowlab" x="0" y="268">อุตสาหกรรม</text><text class="rowlab" x="0" y="368">หุ้น</text>
+
+      <g class="line" data-line="a" style="--lc:var(--a);--d:.1s" tabindex="0" role="button" aria-label="สายน้ำมัน">
+        <path class="hit" d="M96 44V364M96 196L164 264V364"/>
+        <path class="trk" pathLength="1" d="M96 44V364"/>
+        <path class="trk" pathLength="1" d="M96 144V196L164 264V364"/>
+        <g class="pop">
+          <circle class="term" cx="96" cy="44" r="11"/><circle class="dot" cx="96" cy="44" r="4"/>
+          <text class="lab" x="96" y="74" text-anchor="middle">น้ำมันพุ่ง</text>
+          <circle class="st" cx="96" cy="144" r="8"/>
+          <text class="lab" x="96" y="170" text-anchor="middle"><tspan x="96">ต้นทุน</tspan><tspan x="96" dy="14">พลังงานสูง</tspan></text>
+          <circle class="st" cx="96" cy="264" r="8"/>
+          <text class="lab" x="96" y="292" text-anchor="middle">พลังงาน</text>
+          <circle class="st" cx="164" cy="264" r="8"/>
+          <text class="lab" x="164" y="292" text-anchor="middle">สายการบิน</text>
+          <rect class="stk pos" x="71" y="351" width="50" height="26" rx="13"/><text class="tk" x="96" y="369" text-anchor="middle">XOM</text>
+          <text class="ex pos" x="96" y="396" text-anchor="middle">บวก</text>
+          <rect class="stk neg" x="139" y="351" width="50" height="26" rx="13"/><text class="tk" x="164" y="369" text-anchor="middle">DAL</text>
+          <text class="ex neg" x="164" y="396" text-anchor="middle">ลบ</text>
+        </g>
+      </g>
+
+      <g class="line" data-line="b" style="--lc:var(--b);--d:.35s" tabindex="0" role="button" aria-label="สายเงินเฟ้อ">
+        <path class="hit" d="M240 44V364"/>
+        <path class="trk" pathLength="1" d="M240 44V364"/>
+        <g class="pop">
+          <circle class="term" cx="240" cy="44" r="11"/><circle class="dot" cx="240" cy="44" r="4"/>
+          <text class="lab" x="240" y="74" text-anchor="middle"><tspan x="240">รอตัวเลข</tspan><tspan x="240" dy="14">เงินเฟ้อ</tspan></text>
+          <circle class="st" cx="240" cy="144" r="8"/>
+          <text class="lab" x="240" y="170" text-anchor="middle"><tspan x="240">ทิศทาง</tspan><tspan x="240" dy="14">ดอกเบี้ย</tspan></text>
+          <circle class="st" cx="240" cy="264" r="8"/>
+          <text class="lab" x="240" y="292" text-anchor="middle">หุ้นเทค</text>
+          <rect class="stk mix" x="213" y="351" width="54" height="26" rx="13"/><text class="tk" x="240" y="369" text-anchor="middle">NVDA</text>
+          <text class="ex mix" x="240" y="396" text-anchor="middle">ผสม</text>
+        </g>
+      </g>
+
+      <g class="line" data-line="c" style="--lc:var(--c);--d:.6s" tabindex="0" role="button" aria-label="สายดอลลาร์">
+        <path class="hit" d="M312 44V364"/>
+        <path class="trk" pathLength="1" d="M312 44V364"/>
+        <g class="pop">
+          <circle class="term" cx="312" cy="44" r="11"/><circle class="dot" cx="312" cy="44" r="4"/>
+          <text class="lab" x="312" y="74" text-anchor="middle"><tspan x="312">ดอลลาร์</tspan><tspan x="312" dy="14">อ่อนค่า</tspan></text>
+          <circle class="st" cx="312" cy="144" r="8"/>
+          <text class="lab" x="312" y="170" text-anchor="middle"><tspan x="312">ราคา</tspan><tspan x="312" dy="14">โภคภัณฑ์</tspan></text>
+          <circle class="st" cx="312" cy="264" r="8"/>
+          <text class="lab" x="312" y="292" text-anchor="middle">เหมืองทอง</text>
+          <rect class="stk pos" x="287" y="351" width="50" height="26" rx="13"/><text class="tk" x="312" y="369" text-anchor="middle">NEM</text>
+          <text class="ex pos" x="312" y="396" text-anchor="middle">บวก</text>
+        </g>
+      </g>
+    </svg>
+
+    <div class="legend" aria-label="คำอธิบายสัญลักษณ์">
+      <span><i style="border-color:var(--pos)"></i>บวก = Positive Exposure</span>
+      <span><i style="border-color:var(--neg)"></i>ลบ = Negative Exposure</span>
+      <span><i style="border-color:var(--mix);border-style:dashed"></i>ผสม = Mixed</span>
+    </div>
+
+    <div class="sign" id="sign" aria-live="polite"></div>
+  </section>
+
+
+  <section class="quiz" aria-labelledby="zh">
+    <span class="kick">ทายก่อนอ่าน</span>
+    <h2 id="zh">น้ำมันแพงขึ้น ธุรกิจไหนมักได้ผลบวก?</h2>
+    <div class="opts">
+      <button class="opt" data-a="no"><i></i>สายการบิน</button>
+      <button class="opt" data-a="ok"><i></i>บริษัทผลิตน้ำมัน</button>
+      <button class="opt" data-a="no"><i></i>บริษัทขนส่งสินค้า</button>
+    </div>
+    <div class="fb" id="fb" aria-live="polite"></div>
+  </section>
+
+  <section class="sec">
+    <h2>เรื่องอื่นที่ควรรู้</h2>
+    <div class="list">
+      <a class="item" href="#cal"><span class="bar" style="--lc:var(--b)"></span><div><b>ตัวเลขเงินเฟ้อสหรัฐฯ ประกาศคืนนี้</b><span class="small">ดูในปฏิทินว่าตลาดจับตาอะไร</span></div></a>
+      <div class="item"><span class="bar"></span><div><b>บริษัทชิปรายใหญ่เตรียมประกาศงบไตรมาส</b><span class="small">ผลประกอบการ, [วันที่]</span></div></div>
+      <a class="item" href="#cal"><span class="bar" style="--lc:var(--a)"></span><div><b>EIA ประกาศสต็อกน้ำมันรายสัปดาห์แล้ว</b><span class="small">เกี่ยวข้องกับสายน้ำมันวันนี้</span></div></a>
+    </div>
+  </section>
+  <p class="foot">XP ได้จากการเรียนรู้และเปิดดูหลักฐาน ไม่เกี่ยวกับการซื้อขายหุ้น<br>ข้อมูลเพื่อการศึกษา ไม่ใช่คำแนะนำการลงทุน</p>
+</div></section>
+
+<!-- EVENT -->
+<section class="screen" id="s-event"><div class="wrap">
+  <div class="bar2">
+    <a class="back" href="#home" aria-label="กลับหน้าแรก"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <span class="linebadge" style="--lc:var(--a)"><i></i>สายน้ำมัน</span>
+  </div>
+  <h1 class="title">ราคาน้ำมันพุ่ง จากความกังวลเรื่องอุปทาน</h1>
+  <p class="small">อัปเดต [เวลา], [n] แหล่งอ้างอิง, ตรวจโดยทีมงานแล้ว</p>
+
+  <div class="seg" role="group" aria-label="เลือกระดับความละเอียด">
+    <button class="lv" data-level="quick" aria-pressed="false"><b>เร็ว</b><span>15 วินาที</span></button>
+    <button class="lv" data-level="understand" aria-pressed="true"><b>เข้าใจ</b><span>1 นาที</span></button>
+    <button class="lv" data-level="deep" aria-pressed="false"><b>เจาะลึก</b><span>5 นาที</span></button>
+  </div>
+
+  <div data-show="quick">
+    <div class="qa-list">
+      <div><h3>เกิดอะไรขึ้น</h3><p>ราคาน้ำมันขึ้น เพราะตลาดกังวลว่าน้ำมันจะมีไม่พอ</p></div>
+      <div><h3>ใครได้รับผล</h3><p>บริษัทน้ำมันได้ประโยชน์ สายการบินมีต้นทุนเพิ่ม ส่วนธุรกิจการผลิตได้รับผลทั้งสองทาง</p></div>
+      <div><h3>หุ้นที่เกี่ยวข้อง</h3><p class="disp" style="font-size:18px;font-weight:700">XOM, CVX, DAL, UAL</p></div>
+    </div>
+  </div>
+
+  <div data-show="understand deep">
+    <div class="qa-list">
+      <div><h3>เกิดอะไรขึ้น?</h3><p>ราคาน้ำมันดิบปรับขึ้นแรงในวันนี้ หลังมีข่าวว่า<span class="gloss">อุปทาน</span>น้ำมันจากบางแหล่งอาจหายไปจากตลาด</p>
+        <p class="def"><b>อุปทาน (Supply)</b> คือปริมาณสินค้าที่มีขายในตลาด ถ้าของน้อยลงแต่คนยังต้องการเท่าเดิม ราคามักสูงขึ้น</p></div>
+      <div><h3>ทำไมถึงเกิดขึ้น?</h3><p>[สาเหตุจากข่าว เช่น ความไม่สงบในพื้นที่ผลิต หรือการประกาศลดกำลังผลิต] ทำให้ตลาดคาดว่าน้ำมันจะเข้าสู่ตลาดน้อยลง</p></div>
+      <div><h3>ทำไมตลาดถึงสนใจ?</h3><p>น้ำมันเป็นต้นทุนของแทบทุกอย่าง ตั้งแต่ค่าขนส่งไปจนถึงค่าไฟ ถ้าแพงนาน อาจดันเงินเฟ้อและกระทบกำไรของหลายธุรกิจ</p></div>
+      <div><h3>กระทบใครบ้าง?</h3><p>ผู้ผลิตน้ำมันได้ประโยชน์จากราคาขายที่สูงขึ้น ส่วนสายการบินและธุรกิจขนส่งมีต้นทุนเพิ่มขึ้น ดูเส้นทางแต่ละสายด้านล่าง</p></div>
+    </div>
+  </div>
+
+  <section class="sec">
+    <h2>เส้นทางผลกระทบ</h2>
+    <div class="routes" role="group" aria-label="เลือกเส้นทาง">
+      <button class="chip" data-route="DAL" style="--lc:var(--neg)" aria-pressed="true"><i></i>ไปสายการบิน</button>
+      <button class="chip" data-route="XOM" style="--lc:var(--pos)" aria-pressed="false"><i></i>ไปบริษัทน้ำมัน</button>
+    </div>
+    <div class="chain" id="chain" style="--lc:var(--a)"></div>
+    <div class="keys">
+      <span><i></i>เส้นทึบ หลักฐานแข็งแรง</span>
+      <span><i class="d"></i>เส้นประ มีปัจจัยที่อาจทำให้ผลต่างไป</span>
+    </div>
+  </section>
+
+  <section class="sec">
+    <h2>แยกให้ชัดว่าอะไรคือข้อเท็จจริง</h2>
+    <div class="fau">
+      <div class="r"><span class="mk f" aria-hidden="true"></span><div><div class="k">ข้อเท็จจริง</div><p>ราคาน้ำมันดิบ WTI ปิดที่ [ราคา] ดอลลาร์ต่อบาร์เรล เพิ่มขึ้น x.x%</p><p class="s2">ข้อมูลตลาดจาก [ผู้ให้บริการ], คำนวณโดยระบบ</p></div></div>
+      <div class="r"><span class="mk a" aria-hidden="true"></span><div><div class="k">การวิเคราะห์</div><p>ถ้าราคาน้ำมันอยู่ในระดับสูงต่อเนื่อง ต้นทุนเชื้อเพลิงของสายการบินอาจเพิ่มขึ้นในไตรมาสถัดไป</p><p class="s2">เป็นการตีความจากข้อมูล ไม่ใช่ข้อเท็จจริง</p></div></div>
+      <div class="r"><span class="mk u" aria-hidden="true"></span><div><div class="k">สิ่งที่อาจทำให้ต่างไป</div><p>สายการบินบางแห่งซื้อน้ำมันล่วงหน้าไว้แล้ว (hedge) อาจขึ้นค่าตั๋วเพื่อส่งต่อต้นทุน และถ้าความกังวลคลี่คลาย ราคาน้ำมันอาจกลับลงเร็ว</p></div></div>
+    </div>
+  </section>
+
+  <div data-show="deep">
+    <section class="sec">
+      <h2>เจาะลึก</h2>
+      <div class="tl">
+        <div class="row"><span class="when">[วันที่]</span><span>มีรายงานครั้งแรกเรื่อง [เหตุการณ์]</span></div>
+        <div class="row"><span class="when">[วันที่]</span><span>[หน่วยงาน] ยืนยันผลกระทบต่อการผลิต</span></div>
+        <div class="row"><span class="when">วันนี้</span><span>ราคาน้ำมันขึ้น x.x% หุ้นพลังงานบวก หุ้นสายการบินลบ</span></div>
+      </div>
+      <details class="q" open><summary>ในอดีตเกิดอะไรขึ้นในสถานการณ์คล้ายกัน</summary><div class="ans">ช่วงที่น้ำมันขึ้นเกิน [x%] ภายใน 1 สัปดาห์ หุ้นกลุ่มสายการบินให้ผลตอบแทนเฉลี่ย [x.x%] เทียบกับตลาด ([n] ครั้ง ตั้งแต่ปี [ปี])<span class="small">คำนวณโดยระบบจากข้อมูลราคาย้อนหลัง อดีตไม่ได้รับประกันอนาคต</span></div></details>
+      <details class="q"><summary>สิ่งที่ควรติดตามต่อ</summary><div class="ans">รายงานสต็อกน้ำมันรายสัปดาห์ของ EIA, ท่าทีของกลุ่มผู้ผลิตน้ำมันรายใหญ่, และสิ่งที่สายการบินพูดถึงต้นทุนเชื้อเพลิงในการประกาศงบรอบหน้า</div></details>
+    </section>
+  </div>
+
+  <section class="sec">
+    <h2>คำถามที่คนถามบ่อย</h2>
+    <details class="q"><summary>น้ำมันแพงขึ้น แล้วค่าตั๋วเครื่องบินจะแพงขึ้นไหม?</summary><div class="ans">เป็นไปได้ แต่ไม่แน่นอน สายการบินบางแห่งส่งต่อต้นทุนผ่านราคาตั๋วหรือค่าธรรมเนียมเชื้อเพลิง แต่ถ้าการแข่งขันสูง อาจเลือกรับต้นทุนไว้เองบางส่วน<span class="small">อ้างอิง SEC 10-K ของ Delta Air Lines</span></div></details>
+    <details class="q"><summary>ทำไมหุ้นพลังงานถึงได้ประโยชน์?</summary><div class="ans">บริษัทอย่าง XOM และ CVX มีรายได้หลักจากการขายน้ำมันและก๊าซ เมื่อราคาขายสูงขึ้นแต่ต้นทุนการขุดเจาะไม่ได้เพิ่มตาม กำไรต่อบาร์เรลจึงมักดีขึ้น<span class="small">อ้างอิง SEC 10-K ของ ExxonMobil และ Chevron</span></div></details>
+    <details class="q"><summary>ควรซื้อหุ้นพลังงานตอนนี้ไหม?</summary><div class="ans">เราไม่ให้คำแนะนำซื้อขาย เพราะการตัดสินใจขึ้นกับเป้าหมายและความเสี่ยงของแต่ละคน สิ่งที่ช่วยได้คือดูหลักฐานของหุ้นแต่ละตัว และหัวข้อสิ่งที่อาจทำให้ต่างไปด้านบน <a href="#why">ดูหลักฐานของ DAL</a></div></details>
+    <p class="small" style="margin-top:8px">คำตอบเตรียมไว้ล่วงหน้าและตรวจโดยทีมงาน</p>
+  </section>
+
+  <section class="sec">
+    <h2>หุ้นที่ได้รับผล</h2>
+    <div class="list">
+      <a class="stk-row" href="#why"><b>XOM</b><span class="w">รายได้หลักจากการขายน้ำมัน</span><span class="pill pos">บวก</span></a>
+      <a class="stk-row" href="#why"><b>CVX</b><span class="w">รายได้หลักจากการขายน้ำมัน</span><span class="pill pos">บวก</span></a>
+      <a class="stk-row" href="#why"><b>DAL</b><span class="w">ค่าเชื้อเพลิงเป็นต้นทุนหลัก</span><span class="pill neg">ลบ</span></a>
+      <a class="stk-row" href="#why"><b>UAL</b><span class="w">ค่าเชื้อเพลิงเป็นต้นทุนหลัก</span><span class="pill neg">ลบ</span></a>
+    </div>
+  </section>
+
+  <section class="sec" id="sources">
+    <h2>แหล่งอ้างอิง</h2>
+    <div class="list">
+      <div class="src-row"><div><b>[สำนักข่าว]</b><br><span class="small">ข่าว หลักฐานโดยตรง, [เวลา]</span></div><a href="#sources">อ่านต้นฉบับ</a></div>
+      <div class="src-row"><div><b>EIA</b><br><span class="small">ข้อมูลทางการ หลักฐานสนับสนุน</span></div><a href="#sources">ดูข้อมูล</a></div>
+      <div class="src-row"><div><b>SEC 10-K ของ Delta Air Lines</b><br><span class="small">เอกสารบริษัท สัดส่วนต้นทุน</span></div><a href="#sources">ดูเอกสาร</a></div>
+      <div class="src-row"><div><b>[ผู้ให้บริการข้อมูลตลาด]</b><br><span class="small">ราคาหุ้นและดัชนี</span></div><a href="#sources">ดูข้อมูล</a></div>
+    </div>
+  </section>
+  <p class="foot">ข้อมูลเพื่อการศึกษา ไม่ใช่คำแนะนำการลงทุน</p>
+</div></section>
+
+<!-- WHY -->
+<section class="screen" id="s-why"><div class="wrap">
+  <div class="bar2">
+    <a class="back" href="#event" aria-label="กลับไปหน้าเหตุการณ์"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg></a>
+    <span class="linebadge" style="--lc:var(--a)"><i></i>สายน้ำมัน</span>
+  </div>
+  <p class="small" style="margin-top:14px">ทำไมเราถึงแสดงหุ้นตัวนี้</p>
+  <div class="tick">DAL</div>
+  <p style="margin-top:6px">Delta Air Lines, กลุ่มสายการบิน</p>
+
+  <div class="conf">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><span class="pill neg">Negative Exposure</span><b style="font-size:14px">ความมั่นใจ กลาง</b></div>
+    <div class="confline" aria-hidden="true"><span class="n"></span><span class="g"></span><span class="n"></span><span class="g"></span><span class="n"></span><span class="g o"></span><span class="n o"></span></div>
+    <p style="font-size:14px">หลักฐาน 3 จาก 4 ชั้นชี้ไปทางเดียวกัน อีกชั้นหนึ่งมีปัจจัยที่อาจช่วยลดผลกระทบ</p>
+  </div>
+
+  <section class="sec">
+    <h2>หลักฐานทีละชั้น</h2>
+    <div class="layer"><span class="mk f" style="background:var(--neg)"></span><div><b>กลไกทางธุรกิจ</b><p style="font-size:14px">น้ำมันแพง ทำให้เชื้อเพลิงเครื่องบินแพง ต้นทุนต่อเที่ยวบินจึงสูงขึ้น</p><p class="small">กฎที่ทีมงานตรวจสอบแล้ว</p></div></div>
+    <div class="layer"><span class="mk f" style="background:var(--neg)"></span><div><b>จากงบการเงินของบริษัท</b>
+      <div class="kv"><span class="muted">สัดส่วนค่าเชื้อเพลิง</span><b>[x%] ของต้นทุน</b></div>
+      <div class="kv"><span class="muted">ตลาดหลัก</span><b>[ภูมิภาค]</b></div>
+      <a href="#sources" style="font-size:13px;font-weight:600;display:inline-flex;min-height:40px;align-items:center">SEC 10-K ปี [ปี], ดูหน้าที่อ้างอิง</a></div></div>
+    <div class="layer"><span class="mk f" style="background:var(--neg)"></span><div><b>ปฏิกิริยาในอดีต</b>
+      <div class="kv"><span class="muted">Beta ต่อราคาน้ำมัน (2 ปี)</span><b>−x.xx</b></div>
+      <p class="def"><b>Beta</b> บอกว่าในอดีตหุ้นตัวนี้ขยับตามปัจจัยนั้นมากน้อยแค่ไหน ค่าติดลบแปลว่ามักขยับสวนทาง</p>
+      <p class="small" style="margin-top:6px">คำนวณโดยระบบ ไม่ใช่ AI</p></div></div>
+    <div class="layer"><span class="mk u"></span><div><b>ปัจจัยที่อาจช่วยลดผลกระทบ</b><p style="font-size:14px">บริษัทเปิดเผยว่ามีโรงกลั่นของตัวเอง ซึ่งอาจชดเชยต้นทุนบางส่วน และอาจส่งต่อต้นทุนผ่านราคาตั๋ว</p><p class="small">อ้างอิง SEC 10-K, ทีมงานตรวจแล้ว</p></div></div>
+  </section>
+
+  <section class="sec">
+    <h2>ตลาดวันนี้</h2>
+    <div class="list">
+      <div class="stk-row"><span class="w" style="color:var(--ink)">DAL</span><b class="down" style="width:auto">−x.x%</b></div>
+      <div class="stk-row"><span class="w" style="color:var(--ink)">กลุ่มสายการบิน</span><b class="down" style="width:auto">−x.x%</b></div>
+      <div class="stk-row"><span class="w" style="color:var(--ink)">S&amp;P 500</span><b class="down" style="width:auto">−x.x%</b></div>
+      <div class="stk-row"><span class="w" style="color:var(--ink);font-weight:700">ต่างจากตลาด</span><b class="down" style="width:auto">−x.x%</b></div>
+    </div>
+    <p class="small" style="margin-top:8px">การเคลื่อนไหวนี้เกิดขึ้นพร้อมกับเหตุการณ์ แต่ไม่ได้พิสูจน์ว่าเหตุการณ์เป็นสาเหตุ</p>
+  </section>
+
+  <p class="note">เราอธิบายว่าหุ้นตัวนี้เกี่ยวข้องกับเหตุการณ์อย่างไร ไม่ได้บอกว่าหุ้นจะขึ้นหรือลง และไม่ใช่คำแนะนำให้ซื้อหรือขาย</p>
+</div></section>
+
+<!-- SEARCH -->
+<section class="screen" id="s-search"><div class="wrap">
+  <h1 class="mood" style="margin-top:22px;font-size:34px">หุ้นของคุณ<br>เกี่ยวกับเรื่องไหนบ้าง</h1>
+  <div class="field">
+    <label for="q">ชื่อหุ้นหรือบริษัท</label>
+    <input id="q" type="search" autocomplete="off" placeholder="เช่น DAL หรือ Apple">
+  </div>
+  <div id="sugg"></div>
+
+  <section class="sec">
+    <p class="small">ตัวอย่างผลการค้นหา</p>
+    <div style="display:flex;align-items:baseline;justify-content:space-between;margin-top:4px">
+      <div class="tick" style="margin-top:0;font-size:44px">DAL</div>
+      <b class="disp down" style="font-size:20px">−x.x%</b>
+    </div>
+    <p>Delta Air Lines</p>
+    <p class="small" style="margin-top:4px">อ่อนไหวต่อ ราคาน้ำมัน, ความต้องการเดินทาง, ดอกเบี้ย</p>
+    <h2 style="margin-top:24px">เรื่องที่เกี่ยวข้องช่วงนี้</h2>
+    <div class="list">
+      <a class="item" href="#event"><span class="bar" style="--lc:var(--a)"></span><div style="flex:1"><b>ราคาน้ำมันพุ่ง จากความกังวลเรื่องอุปทาน</b><span class="small">วันนี้, ต้นทุนเชื้อเพลิง</span></div><span class="pill neg">ลบ</span></a>
+      <div class="item"><span class="bar"></span><div style="flex:1"><b>[เหตุการณ์ด้านการเดินทาง]</b><span class="small">[วันที่], ความต้องการเดินทาง</span></div><span class="pill pos">บวก</span></div>
+      <div class="item"><span class="bar" style="--lc:var(--b)"></span><div style="flex:1"><b>[เหตุการณ์ด้านดอกเบี้ย]</b><span class="small">[วันที่], ต้นทุนการกู้ยืม</span></div><span class="pill mix">ผสม</span></div>
+    </div>
+    <p class="small" style="margin-top:14px">หุ้นที่ยังไม่อยู่ในการวิเคราะห์จะแสดงราคาและข่าวได้ แต่จะยังไม่มีเส้นทางผลกระทบ</p>
+  </section>
+</div></section>
+
+<!-- CALENDAR -->
+<section class="screen" id="s-cal"><div class="wrap">
+  <h1 class="mood" style="margin-top:22px;font-size:34px">ตัวเลขที่ตลาด<br>กำลังรอ</h1>
+  <p class="muted" style="margin-top:8px;font-size:14px">เวลาประเทศไทย ตารางจากหน่วยงานทางการ แตะแต่ละรายการเพื่อดูว่าตัวเลขส่งผลอย่างไร</p>
+
+  <p class="day">วันนี้</p>
+  <div class="ev"><span class="when">[เวลา]</span><div>
+    <span class="tag">สำคัญมาก</span>
+    <div class="nm">เงินเฟ้อสหรัฐฯ (CPI)</div>
+    <span class="lk" style="--lc:var(--b)"><i></i>อยู่บนสายเงินเฟ้อวันนี้</span>
+    <div class="vals"><span>ครั้งก่อน <b>[x.x%]</b></span></div>
+    <details class="q"><summary>ถ้าตัวเลขสูงหรือต่ำ มักส่งผลอย่างไร</summary><div class="ans">ถ้าเงินเฟ้อสูงขึ้น ตลาดมักมองว่าเฟดอาจคงดอกเบี้ยสูงไว้นานขึ้น ผลตอบแทนพันธบัตรมักปรับขึ้น และหุ้นกลุ่มเติบโตอาจถูกกดดันด้านมูลค่า ถ้าต่ำลง กลไกมักกลับด้าน<span class="small">กลไกที่ตลาดมักพูดถึง ไม่ใช่การทำนาย ที่มา BLS</span></div></details>
+  </div></div>
+  <div class="ev"><span class="when">[เวลา]</span><div>
+    <span class="tag" style="color:var(--pos)">ประกาศแล้ว</span>
+    <div class="nm">สต็อกน้ำมันดิบสหรัฐฯ รายสัปดาห์</div>
+    <span class="lk" style="--lc:var(--a)"><i></i>อยู่บนสายน้ำมันวันนี้</span>
+    <div class="vals"><span>ครั้งก่อน <b>[x ล้านบาร์เรล]</b></span><span>ล่าสุด <b>[x ล้านบาร์เรล]</b></span></div>
+    <details class="q"><summary>ตัวเลขนี้บอกอะไร</summary><div class="ans">ถ้าสต็อกลดลงมากกว่าปกติ แปลว่าน้ำมันถูกใช้มากหรือผลิตน้อย ราคาน้ำมันมักได้แรงหนุน ถ้าสต็อกเพิ่มขึ้น ราคามักถูกกดดัน <a href="#event">ดูเรื่องน้ำมันวันนี้</a><span class="small">ที่มา EIA</span></div></details>
+  </div></div>
+
+  <p class="day">สัปดาห์นี้</p>
+  <div class="ev"><span class="when">[วัน]</span><div>
+    <span class="tag">สำคัญมาก</span>
+    <div class="nm">ประชุมกำหนดดอกเบี้ย (FOMC)</div>
+    <div class="vals"><span>ดอกเบี้ยปัจจุบัน <b>[x.xx%]</b></span></div>
+    <details class="q"><summary>ถ้าลดหรือคงดอกเบี้ย มักส่งผลอย่างไร</summary><div class="ans">ถ้าเฟดลดดอกเบี้ย ต้นทุนการกู้ยืมมักลดลง ซึ่งมักเป็นผลดีต่อธุรกิจที่ใช้เงินกู้มาก ถ้าคงหรือขึ้น ผลมักกลับด้าน ตลาดยังฟังด้วยว่าเฟดพูดถึงทิศทางข้างหน้าอย่างไร<span class="small">ที่มา Federal Reserve</span></div></details>
+  </div></div>
+  <div class="ev"><span class="when">[วัน]</span><div>
+    <span class="tag">สำคัญมาก</span>
+    <div class="nm">การจ้างงานนอกภาคเกษตร</div>
+    <div class="vals"><span>ครั้งก่อน <b>[xxx,000 ตำแหน่ง]</b></span></div>
+    <details class="q"><summary>ถ้าตัวเลขแข็งแรงหรืออ่อนแอ มักส่งผลอย่างไร</summary><div class="ans">ถ้าการจ้างงานแข็งแรง แปลว่าเศรษฐกิจยังดี แต่อาจทำให้เฟดไม่รีบลดดอกเบี้ย ถ้าอ่อนแอ ตลาดอาจกังวลเรื่องเศรษฐกิจชะลอ แต่ก็อาจคาดว่าดอกเบี้ยจะลดเร็วขึ้น<span class="small">ที่มา BLS</span></div></details>
+  </div></div>
+  <p class="small" style="margin-top:16px">ยังไม่แสดงตัวเลขที่ตลาดคาดการณ์ไว้ เพราะเป็นข้อมูลที่ต้องซื้อ จะเพิ่มในเฟสถัดไป</p>
+</div></section>
+
+<div class="toast" id="toast" role="status"></div>
+<nav class="tabbar" aria-label="เมนูหลัก">
+  <a href="#home" data-tab="s-home"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4v16M12 4v6l7 7v3"/><circle cx="5" cy="12" r="2.2" fill="var(--paper)"/><circle cx="12" cy="8" r="2.2" fill="var(--paper)"/></svg><span>ตลาดวันนี้</span></a>
+  <a href="#search" data-tab="s-search"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><span>ค้นหุ้น</span></a>
+  <a href="#cal" data-tab="s-cal"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg><span>ปฏิทิน</span></a>
+</nav>
+
+<script>
+(function(){
+  /* routing */
+  var map={'#home':'s-home','#event':'s-event','#why':'s-why','#search':'s-search','#cal':'s-cal'};
+  function route(){
+    var id=map[location.hash]||(location.hash?null:'s-home');
+    if(!id) return;
+    document.querySelectorAll('.screen').forEach(function(s){s.classList.toggle('on',s.id===id);});
+    var tab=(id==='s-event'||id==='s-why')?'s-home':id;
+    document.querySelectorAll('.tabbar a').forEach(function(a){a.classList.toggle('on',a.dataset.tab===tab);});
+    window.scrollTo(0,0);
+  }
+  window.addEventListener('hashchange',route); route();
+
+  /* impact map */
+  var lines={
+    a:{name:'สายน้ำมัน',title:'ราคาน้ำมันพุ่ง จากความกังวลเรื่องอุปทาน',body:'ตลาดกังวลว่าน้ำมันที่ส่งเข้าสู่ตลาดโลกอาจลดลง ราคาจึงขึ้น ส่งผลทั้งกับบริษัทที่ขายน้ำมันและธุรกิจที่ใช้น้ำมันเป็นต้นทุน',
+       eff:[['pos','บวก','พลังงาน ขายน้ำมันได้ราคาดีขึ้น'],['neg','ลบ','สายการบิน ค่าเชื้อเพลิงเป็นต้นทุนก้อนใหญ่']],cta:['อ่านเรื่องนี้ใน 1 นาที','#event'],meta:'[n] แหล่งอ้างอิง ตรวจโดยทีมงานแล้ว'},
+    b:{name:'สายเงินเฟ้อ',title:'ตลาดรอตัวเลขเงินเฟ้อสหรัฐฯ คืนนี้',body:'ถ้าเงินเฟ้อสูงกว่าเดิม ตลาดมักคาดว่าดอกเบี้ยจะอยู่สูงนานขึ้น ซึ่งกดดันมูลค่าหุ้นเทคที่คาดหวังกำไรในอนาคต ถ้าต่ำกว่าเดิม ผลมักกลับด้าน',
+       eff:[['mix','ผสม','หุ้นเทค ขึ้นกับว่าตัวเลขออกมาทางไหน']],cta:['ดูในปฏิทินเศรษฐกิจ','#cal'],meta:'เหตุการณ์ที่กำลังจะเกิด'},
+    c:{name:'สายดอลลาร์',title:'ดอลลาร์อ่อนค่า หนุนราคาสินค้าโภคภัณฑ์',body:'ทองคำและสินค้าโภคภัณฑ์ซื้อขายเป็นดอลลาร์ เมื่อดอลลาร์อ่อน คนที่ถือสกุลเงินอื่นซื้อได้ถูกลง ความต้องการจึงมักเพิ่มขึ้น',
+       eff:[['pos','บวก','เหมืองทอง ขายทองได้ราคาดีขึ้น']],cta:null,meta:'หน้ารายละเอียดของเรื่องนี้ยังไม่มีในตัวอย่าง'}
+  };
+  var svg=document.getElementById('map'),sign=document.getElementById('sign');
+  var colors={a:'var(--a)',b:'var(--b)',c:'var(--c)'};
+  function pick(k){
+    svg.setAttribute('class','map pick-'+k);
+    document.querySelectorAll('.chip[data-pick]').forEach(function(c){c.setAttribute('aria-pressed',c.dataset.pick===k?'true':'false');});
+    var d=lines[k];
+    sign.style.setProperty('--lc',colors[k]);
+    sign.innerHTML='<div class="band"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6" fill="#fff"/><circle cx="8" cy="8" r="2.5" fill="currentColor"/></svg>'+d.name+'</div>'+
+      '<div class="body"><h3>'+d.title+'</h3><p style="font-size:14px">'+d.body+'</p><div class="eff">'+
+      d.eff.map(function(e){return '<div><span class="pill '+e[0]+'">'+e[1]+'</span><span>'+e[2]+'</span></div>';}).join('')+'</div>'+
+      (d.cta?'<a class="cta" href="'+d.cta[1]+'">'+d.cta[0]+'</a>':'')+'<span class="small">'+d.meta+'</span></div>';
+  }
+  document.querySelectorAll('.chip[data-pick]').forEach(function(c){c.addEventListener('click',function(){pick(c.dataset.pick);});});
+  document.querySelectorAll('.map .line').forEach(function(g){
+    g.addEventListener('click',function(){pick(g.dataset.line);});
+    g.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(g.dataset.line);}});
+  });
+  pick('a');
+
+
+  /* hybrid: quests + xp */
+  var xp=120,xpText=document.getElementById('xpText'),toast=document.getElementById('toast'),tt,doneN=0,seen={a:1};
+  function gain(n,msg){xp+=n;xpText.textContent=xp+' / 300 XP';toast.innerHTML='<b>+'+n+' XP</b>'+msg;toast.classList.add('on');clearTimeout(tt);tt=setTimeout(function(){toast.classList.remove('on');},1900);}
+  var qd={};
+  function complete(i,n,msg){
+    if(qd[i])return; qd[i]=1; doneN++;
+    document.getElementById('js'+i).classList.add('done');
+    document.getElementById('jl'+i).classList.add('ok');
+    document.getElementById('jfill').style.width=(doneN===1?0:doneN===2?50:100)+'%';
+    gain(n,msg);
+    if(doneN===3)setTimeout(function(){gain(20,'ครบทุกสถานีวันนี้ ได้เหรียญ รู้ทันน้ำมัน');},2000);
+  }
+  var origPick=pick;
+  pick=function(k){origPick(k);if(!seen[k]){seen[k]=1;var c=Object.keys(seen).length;document.getElementById('jl1c').textContent=c+' จาก 3, +40 XP';if(c===3)complete(1,40,'สำรวจครบทุกสายแล้ว');}};
+  document.querySelectorAll('.chip[data-pick]').forEach(function(c){var n=c.cloneNode(true);c.parentNode.replaceChild(n,c);n.addEventListener('click',function(){pick(n.dataset.pick);});});
+  document.querySelectorAll('.map .line').forEach(function(g){var n=g.cloneNode(true);g.parentNode.replaceChild(n,g);
+    n.addEventListener('click',function(){pick(n.dataset.line);});
+    n.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(n.dataset.line);}});});
+  window.addEventListener('hashchange',function(){if(location.hash==='#why'||location.hash==='#sources')complete(3,10,'เปิดดูหลักฐานแล้ว');});
+  var fb=document.getElementById('fb'),ans=false;
+  document.querySelectorAll('.opt').forEach(function(o){o.addEventListener('click',function(){
+    if(ans)return;ans=true;var ok=o.dataset.a==='ok';
+    document.querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.a==='ok')x.classList.add('right');});
+    if(!ok)o.classList.add('wrong');
+    fb.className='fb on';
+    fb.innerHTML='<b>'+(ok?'ถูกต้อง':'เกือบแล้ว')+'</b>บริษัทผลิตน้ำมันขายน้ำมันได้ราคาดีขึ้น ส่วนสายการบินและบริษัทขนส่งใช้น้ำมันเป็นต้นทุน จึงมักได้ผลลบ ดูเส้นสีม่วงบนแผนที่ด้านบนประกอบได้<span class="small" style="display:block;margin-top:6px">อ้างอิง SEC 10-K ของ ExxonMobil และ Delta Air Lines</span>';
+    complete(2,ok?30:15,ok?'ตอบถูก':'ได้เรียนรู้เพิ่ม');
+  });});
+
+  /* depth */
+  function setLevel(l){
+    document.querySelectorAll('.lv').forEach(function(b){b.setAttribute('aria-pressed',b.dataset.level===l?'true':'false');});
+    document.querySelectorAll('[data-show]').forEach(function(d){d.classList.toggle('on',d.dataset.show.split(' ').indexOf(l)>-1);});
+  }
+  document.querySelectorAll('.lv').forEach(function(b){b.addEventListener('click',function(){setLevel(b.dataset.level);});});
+  setLevel('understand');
+
+  /* chain */
+  var routes={
+    DAL:{st:[
+      ['เหตุการณ์','ราคาน้ำมันดิบปรับขึ้น','ราคา WTI เพิ่มขึ้น x.x% ในวันนี้','ข้อเท็จจริงจากข้อมูลตลาด','solid'],
+      ['เศรษฐกิจ','ต้นทุนพลังงานสูงขึ้น','น้ำมันดิบถูกกลั่นเป็นเชื้อเพลิงเครื่องบินและดีเซล ราคาจึงมักขยับตามกัน','ความมั่นใจ สูง','solid'],
+      ['อุตสาหกรรม','สายการบิน','ค่าเชื้อเพลิงเป็นหนึ่งในต้นทุนก้อนใหญ่ที่สุดของสายการบิน','ความมั่นใจ สูง','dashed'],
+      ['บริษัท','Delta Air Lines','รายงานประจำปี [ปี] ระบุค่าเชื้อเพลิงราว [x%] ของต้นทุนดำเนินงาน แต่บริษัทมีโรงกลั่นของตัวเอง','ความมั่นใจ กลาง','solid']],
+      end:['DAL','neg','Negative Exposure']},
+    XOM:{st:[
+      ['เหตุการณ์','ราคาน้ำมันดิบปรับขึ้น','ราคา WTI เพิ่มขึ้น x.x% ในวันนี้','ข้อเท็จจริงจากข้อมูลตลาด','solid'],
+      ['เศรษฐกิจ','ราคาขายน้ำมันสูงขึ้น','ผู้ผลิตขายน้ำมันแต่ละบาร์เรลได้เงินมากขึ้น','ความมั่นใจ สูง','solid'],
+      ['อุตสาหกรรม','ผู้ผลิตน้ำมันและก๊าซ','รายได้ของกลุ่มนี้ผูกกับราคาขายโดยตรง','ความมั่นใจ สูง','solid'],
+      ['บริษัท','ExxonMobil','รายงานประจำปี [ปี] แสดงว่าธุรกิจต้นน้ำสร้างกำไรราว [x%] ของทั้งบริษัท','ความมั่นใจ สูง','solid']],
+      end:['XOM','pos','Positive Exposure']}
+  };
+  var chain=document.getElementById('chain');
+  function renderRoute(k){
+    document.querySelectorAll('.chip[data-route]').forEach(function(c){c.setAttribute('aria-pressed',c.dataset.route===k?'true':'false');});
+    var r=routes[k];
+    chain.innerHTML=r.st.map(function(s,i){
+      return '<div class="stn"><div class="rail"><span class="c'+(i===0?' t':'')+'"></span><span class="s '+s[4]+'"></span></div>'+
+        '<div class="txt"><div class="ly">'+s[0]+'</div><div class="nm">'+s[1]+'</div><p class="ds">'+s[2]+'</p><div class="cf">'+s[3]+'</div></div></div>';
+    }).join('')+
+    '<div class="stn"><div class="rail"><span class="c" style="border-color:var(--'+r.end[1]+')"></span></div><div class="txt">'+
+    '<div class="ly">หุ้น</div><a class="stkchip '+r.end[1]+'" href="#why"><b>'+r.end[0]+'</b><span>'+r.end[2]+'</span></a>'+
+    '<p class="small" style="margin-top:8px"><a href="#why">ดูหลักฐานว่าทำไมถึงเป็นหุ้นตัวนี้</a></p></div></div>';
+  }
+  document.querySelectorAll('.chip[data-route]').forEach(function(c){c.addEventListener('click',function(){renderRoute(c.dataset.route);});});
+  renderRoute('DAL');
+
+  /* search */
+  var stocks=[['DAL','Delta Air Lines',1],['UAL','United Airlines',1],['XOM','ExxonMobil',1],['CVX','Chevron',1],['NVDA','NVIDIA',1],['NEM','Newmont',1],['AAPL','Apple',1],['XYZW','[บริษัทที่ยังไม่ครอบคลุม]',0]];
+  var q=document.getElementById('q'),sg=document.getElementById('sugg');
+  function esc(t){return t.replace(/[&<>"]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+  q.addEventListener('input',function(){
+    var v=q.value.trim().toLowerCase(); if(!v){sg.innerHTML='';return;}
+    var r=stocks.filter(function(x){return x[0].toLowerCase().indexOf(v)===0||x[1].toLowerCase().indexOf(v)>-1;});
+    sg.innerHTML=r.length?r.map(function(x){
+      return '<a href="#search"><b>'+esc(x[0])+'</b><span class="muted">'+esc(x[1])+'</span>'+(x[2]?'<span class="pill pos">มีการวิเคราะห์</span>':'<span class="pill mix">ราคาและข่าว</span>')+'</a>';
+    }).join(''):'<div class="muted">ไม่พบ "'+esc(q.value)+'" ในรายการตัวอย่าง ลองพิมพ์ DAL หรือ XOM</div>';
+  });
+})();
+</script>
+</body>
+</html>
