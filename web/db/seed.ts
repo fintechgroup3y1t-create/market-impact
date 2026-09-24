@@ -5,7 +5,7 @@
 
 import "dotenv/config";
 import { and, eq } from "drizzle-orm";
-import { getDb } from "./client";
+import type { getDb } from "./client";
 import {
   claimEvidence,
   claims,
@@ -22,9 +22,10 @@ import {
 } from "./schema";
 import { companies, events as sampleEvents, evidence as sampleEvidence, exposures as sampleExposures, lines } from "../lib/sample/data";
 
-async function main() {
-  const db = getDb();
+type Db = ReturnType<typeof getDb>;
 
+/** ใช้ได้ทั้งจาก CLI (npm run db:seed) และจาก /api/admin/seed บนเซิร์ฟเวอร์ */
+export async function runSeed(db: Db) {
   console.log("1/6 factors …");
   for (const l of lines) {
     await db
@@ -188,10 +189,3 @@ async function main() {
 
   console.log("6/6 เสร็จแล้ว");
 }
-
-main()
-  .then(() => process.exit(0))
-  .catch((err) => {
-    console.error(err);
-    process.exit(1);
-  });
