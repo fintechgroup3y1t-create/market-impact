@@ -1,12 +1,36 @@
 // จุดเดียวที่หน้าเว็บใช้ดึงข้อมูล
-// ตอนนี้อ่านจากข้อมูลตัวอย่าง ชิ้นที่ 2 จะเปลี่ยนให้อ่านจากฐานข้อมูล/API แทน โดยหน้าเว็บไม่ต้องแก้
+// เนื้อหาเหตุการณ์ (events, chains, claims, exposures) ยังอ่านจากข้อมูลตัวอย่างเหมือนเดิม
+// (ย้ายเป็นเนื้อหาจริงในชิ้นที่ 5 ที่มี pipeline ข่าว+AI) แต่ "ตัวเลข" (metrics) อ่านจากฐานข้อมูลจริงแล้ว
+// ตามชิ้นที่ 2: ราคาหุ้นจริง + คำนวณ return ใน backend (ดู app/api/cron/prices)
 
+import { cache } from "react";
+import { getDb, isDatabaseConfigured } from "@/db/client";
+import { marketMetrics as marketMetricsTable } from "@/db/schema";
 import * as sample from "./sample/data";
-import type { Company, Evidence, Exposure, Line, MarketEvent, StockExposure } from "./types";
+import type { Company, Evidence, Exposure, Line, MarketEvent, MarketMetrics, MetricValue, StockExposure } from "./types";
 
 export const IS_SAMPLE_DATA = true;
 
-export const metrics = sample.metrics;
+/**
+ * ตัวเลขตลาดจริงจากฐานข้อมูล (ใส่โดย /api/cron/prices เท่านั้น)
+ * ยังไม่มีข้อมูลตัวไหน (เช่น ยังไม่เคยรัน cron หรือฐานข้อมูลต่อไม่ได้) → placeholder นั้นแสดง "[ไม่มีข้อมูล]"
+ * ไม่ใช้ข้อมูลสมมติมาแทนที่ เพื่อไม่ให้ใครเข้าใจผิดว่าเป็นตัวเลขจริง
+ */
+export const getMetrics = cache(async (): Promise<MarketMetrics> => {
+  if (!isDatabaseConfigured()) return sample.metrics; // เช่น รันในเครื่องที่ยังไม่ได้ตั้งค่า DATABASE_URL
+  try {
+    const rows = await getDb().select().from(marketMetricsTable);
+    const out: MarketMetrics = {};
+    for (const r of rows) {
+      (out[r.entityKey] ??= {})[r.metric] = { value: r.value, unit: r.unit as MetricValue["unit"] };
+    }
+    return out;
+  } catch (err) {
+    console.error("getMetrics: อ่านฐานข้อมูลไม่ได้", err);
+    return {};
+  }
+});
+
 export const home = sample.home;
 export const calendar = sample.calendar;
 export const companies = sample.companies;

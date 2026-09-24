@@ -7,7 +7,7 @@ import { BackBar } from "@/components/BackBar";
 import { Footer } from "@/components/Footer";
 import { MarkEvidenceOpened } from "@/components/GameProvider";
 import { dirClass, T } from "@/components/Metric";
-import { allExposures, getCompany, getEvent, getExposure, getLine } from "@/lib/data";
+import { allExposures, getCompany, getEvent, getExposure, getLine, getMetrics } from "@/lib/data";
 import { EXPOSURE_LONG } from "@/lib/labels";
 
 type Props = { params: Promise<{ slug: string; ticker: string }> };
@@ -16,6 +16,9 @@ export function generateStaticParams() {
   return allExposures().map((x) => ({ slug: x.eventSlug, ticker: x.ticker }));
 }
 export const dynamicParams = false;
+
+// ราคาที่แสดงมาจากฐานข้อมูล อัปเดตทุกคืนผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
+export const revalidate = 1800;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { ticker } = await params;
@@ -31,6 +34,7 @@ export default async function WhyStockPage({ params }: Props) {
   const line = getLine(event.lineId);
   const ec = `var(--${x.exposure})`;
   const supporting = x.layers.filter((l) => l.signal === "support").length;
+  const metrics = await getMetrics();
 
   return (
     <>
@@ -72,7 +76,7 @@ export default async function WhyStockPage({ params }: Props) {
               {l.kv?.map((kv) => (
                 <div key={kv.k} className="kv">
                   <span className="muted">{kv.k}</span>
-                  <b><T text={kv.v} /></b>
+                  <b><T text={kv.v} metrics={metrics} /></b>
                 </div>
               ))}
               {l.glossary && (
@@ -97,8 +101,8 @@ export default async function WhyStockPage({ params }: Props) {
           {x.today.map((r) => (
             <div key={r.label} className="stk-row static">
               <span className="w" style={{ color: "var(--ink)", fontWeight: r.emphasis ? 700 : undefined }}>{r.label}</span>
-              <b className={dirClass(r.value)} style={{ width: "auto" }}>
-                <T text={r.value} />
+              <b className={dirClass(r.value, metrics)} style={{ width: "auto" }}>
+                <T text={r.value} metrics={metrics} />
               </b>
             </div>
           ))}

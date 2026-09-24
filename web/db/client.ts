@@ -21,7 +21,7 @@ export function getDb() {
     );
   }
   if (!dbInstance) {
-    client = postgres(process.env.DATABASE_URL, { prepare: false });
+    client = postgres(process.env.DATABASE_URL, { prepare: false, connect_timeout: 10 });
     dbInstance = drizzle(client, { schema });
   }
   return dbInstance;
