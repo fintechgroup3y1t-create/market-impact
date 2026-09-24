@@ -9,7 +9,7 @@ import { checkAdminSecret } from "@/lib/admin-auth";
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
 
-export async function POST(request: Request) {
+async function handler(request: Request) {
   const denied = checkAdminSecret(request);
   if (denied) return denied;
   if (!isDatabaseConfigured()) {
@@ -22,3 +22,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: err instanceof Error ? err.message : String(err) }, { status: 500 });
   }
 }
+
+export const POST = handler;
+export const GET = handler; // เปิดลิงก์ตรง ๆ ในเบราว์เซอร์ได้ (มีค่า ?secret=... ต่อท้าย)

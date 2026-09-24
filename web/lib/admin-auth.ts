@@ -6,7 +6,8 @@ export function checkAdminSecret(request: Request): Response | null {
   if (!expected) {
     return Response.json({ error: "ยังไม่ได้ตั้งค่า ADMIN_SECRET บนเซิร์ฟเวอร์นี้" }, { status: 503 });
   }
-  const got = request.headers.get("x-admin-secret");
+  // รองรับทั้ง header (เรียกจากโค้ด) และ query string ?secret=... (เปิดลิงก์ตรง ๆ ในเบราว์เซอร์ได้)
+  const got = request.headers.get("x-admin-secret") ?? new URL(request.url).searchParams.get("secret");
   if (got !== expected) {
     return Response.json({ error: "unauthorized" }, { status: 401 });
   }
