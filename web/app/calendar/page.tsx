@@ -3,11 +3,16 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Footer } from "@/components/Footer";
 import { lineVar } from "@/components/LineBadge";
-import { calendar, getLine } from "@/lib/data";
+import { T } from "@/components/Metric";
+import { calendar, getLine, getMetrics } from "@/lib/data";
 
 export const metadata: Metadata = { title: "ปฏิทินเศรษฐกิจ" };
 
-export default function CalendarPage() {
+// ตัวเลขมาจากฐานข้อมูล อัปเดตทุกวันผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
+export const revalidate = 1800;
+
+export default async function CalendarPage() {
+  const metrics = await getMetrics();
   const groups = [...new Set(calendar.map((c) => c.group))];
   return (
     <>
@@ -42,7 +47,7 @@ export default function CalendarPage() {
                     <div className="vals">
                       {c.values.map((v) => (
                         <span key={v.label}>
-                          {v.label} <b>{v.value}</b>
+                          {v.label} <b><T text={v.value} metrics={metrics} /></b>
                         </span>
                       ))}
                     </div>

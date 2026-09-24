@@ -15,6 +15,8 @@ export async function GET(request: Request) {
   const result: Record<string, unknown> = {
     databaseUrlSet: isDatabaseConfigured(),
     tiingoKeySet: Boolean(process.env.TIINGO_API_KEY),
+    fredKeySet: Boolean(process.env.FRED_API_KEY),
+    eiaKeySet: Boolean(process.env.EIA_API_KEY),
     cronSecretSet: Boolean(process.env.CRON_SECRET),
   };
 
