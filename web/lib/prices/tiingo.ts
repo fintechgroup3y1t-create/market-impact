@@ -13,7 +13,7 @@ export interface ProxyTicker {
 export const PROXY_TICKERS: ProxyTicker[] = [
   { key: "WTI", fetchTicker: "USO", proxyNote: "อ้างอิงจาก ETF น้ำมัน USO (ไม่ใช่ราคา WTI ฟิวเจอร์สโดยตรง)" },
   { key: "SPX", fetchTicker: "SPY", proxyNote: "อ้างอิงจาก ETF ดัชนี SPY (ไม่ใช่ดัชนี S&P 500 โดยตรง)" },
-  { key: "GOLD", fetchTicker: "GLD", proxyNote: "อ้างอิงจาก ETF ทองคำ GLD (ไม่ใช่ราคาทองคำแท่งโดยตรง)" },
+  { key: "XAU", fetchTicker: "GLD", proxyNote: "อ้างอิงจาก ETF ทองคำ GLD (ไม่ใช่ราคาทองคำแท่งโดยตรง)" },
   { key: "US10Y", fetchTicker: "TLT", proxyNote: "อ้างอิงจาก ETF พันธบัตรระยะยาว TLT (ทิศทางตรงข้ามผลตอบแทนพันธบัตรคร่าว ๆ ไม่ใช่ yield โดยตรง)" },
 ];
 
