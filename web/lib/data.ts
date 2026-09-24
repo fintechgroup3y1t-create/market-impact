@@ -165,8 +165,12 @@ export const allEventsAnyStatus = cache(async (): Promise<MarketEvent[]> => {
   const sampleEvents = sample.events;
   if (!isDatabaseConfigured()) return sampleEvents;
   try {
+    const sampleSlugs = new Set(sampleEvents.map((e) => e.slug));
     const rows = await getDb().select().from(eventsTable);
-    const dbEvents = await loadDbEvents(rows);
+    // เหตุการณ์ตัวอย่าง (เช่น oil-supply) ถูก seed เข้า DB ไว้ด้วยตั้งแต่ชิ้นที่ 2 (เผื่อดึงราคาจริง)
+    // แต่เนื้อหายังยึดจากไฟล์ตัวอย่างเป็นหลัก ไม่เอาแถว DB ที่ slug ซ้ำมาแสดงซ้ำ
+    const dbRows = rows.filter((r) => !sampleSlugs.has(r.slug));
+    const dbEvents = await loadDbEvents(dbRows);
     return [...sampleEvents, ...dbEvents];
   } catch (err) {
     console.error("allEventsAnyStatus: อ่านฐานข้อมูลไม่ได้", err);
