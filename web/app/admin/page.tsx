@@ -30,7 +30,7 @@ const STATUS_LABEL: Record<EventSummary["reviewStatus"], string> = {
 };
 
 const SAMPLE_TEMPLATE = `{
-  "slug": "ตัวอย่าง-slug-ภาษาอังกฤษ",
+  "slug": "example-event-slug-2",
   "lineId": "oil",
   "title": "หัวข้อเหตุการณ์",
   "quick": { "what": "เกิดอะไรขึ้น (สั้น ๆ)", "who": "ใครได้รับผล", "tickers": ["XOM"] },
@@ -248,7 +248,8 @@ export default function AdminPage() {
         <h2>เขียนเหตุการณ์ใหม่</h2>
         <p className="small">
           วางข้อมูลในรูปแบบ JSON ตามตัวอย่าง (ticker ทุกตัวต้องเป็นบริษัทที่มีอยู่แล้วในระบบ, lineId ต้องเป็น oil / inflation / dollar,
-          ตัวเลขในข้อความต้องใส่ผ่าน <code>{"{{TICKER.field}}"}</code> เท่านั้น)
+          ตัวเลขในข้อความต้องใส่ผ่าน <code>{"{{TICKER.field}}"}</code> เท่านั้น) <b>slug ต้องเป็นภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลางเท่านั้น
+          เช่น &quot;oil-supply-2&quot; ห้ามมีภาษาไทยหรือช่องว่างเด็ดขาด ไม่งั้นเปิดหน้าจริงจะหาไม่เจอ</b>
         </p>
         <textarea
           value={jsonInput}

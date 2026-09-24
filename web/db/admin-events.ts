@@ -74,6 +74,14 @@ export class AdminEventError extends Error {}
 
 /** สร้างเหตุการณ์ใหม่ทั้งหมดในทรานแซกชันเดียว สถานะเริ่มต้นเป็น "รอตรวจ" เสมอ (ต้องกดอนุมัติแยก) */
 export async function createEvent(payload: NewEventPayload): Promise<{ slug: string }> {
+  // slug ต้องเป็นภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลางเท่านั้น (แบบเดียวกับ "oil-supply")
+  // ตัวอักษรไทยหรือช่องว่างใน slug ทำให้ URL มีปัญหาการเข้ารหัสจนเปิดหน้าจริงไม่เจอ แม้ข้อมูลจะถูกบันทึกสำเร็จก็ตาม
+  if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(payload.slug)) {
+    throw new AdminEventError(
+      `slug "${payload.slug}" ใช้ไม่ได้ — ต้องเป็นภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลางเท่านั้น เช่น "oil-supply-2" (ห้ามมีภาษาไทยหรือช่องว่าง)`,
+    );
+  }
+
   const db = getDb();
 
   const [factor] = await db.select().from(factors).where(eq(factors.id, payload.lineId));
