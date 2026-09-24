@@ -1,13 +1,43 @@
 // จุดเดียวที่หน้าเว็บใช้ดึงข้อมูล
-// เนื้อหาเหตุการณ์ (events, chains, claims, exposures) ยังอ่านจากข้อมูลตัวอย่างเหมือนเดิม
-// (ย้ายเป็นเนื้อหาจริงในชิ้นที่ 5 ที่มี pipeline ข่าว+AI) แต่ "ตัวเลข" (metrics) อ่านจากฐานข้อมูลจริงแล้ว
-// ตามชิ้นที่ 2: ราคาหุ้นจริง + คำนวณ return ใน backend (ดู app/api/cron/prices)
+// เนื้อหาเหตุการณ์เดิม (น้ำมันพุ่ง) ยังเป็นข้อมูลตัวอย่างที่เขียนไว้อย่างดีจากชิ้นที่ 1-4 คงไว้เหมือนเดิม
+// เหตุการณ์ใหม่ที่เขียนผ่านหน้าแอดมิน (ชิ้นที่ 5) เก็บในฐานข้อมูลจริง แล้ว "รวม" เข้ากับของตัวอย่างตอนแสดงผล
+// "ตัวเลข" (metrics) อ่านจากฐานข้อมูลจริงเสมอตั้งแต่ชิ้นที่ 2 (ดู app/api/cron/prices)
 
+import { and, eq, inArray } from "drizzle-orm";
 import { cache } from "react";
 import { getDb, isDatabaseConfigured } from "@/db/client";
-import { marketMetrics as marketMetricsTable } from "@/db/schema";
+import {
+  claimEvidence as claimEvidenceTable,
+  claims as claimsTable,
+  companyExposures as companyExposuresTable,
+  entities as entitiesTable,
+  eventCompanyImpacts as eventCompanyImpactsTable,
+  events as eventsTable,
+  evidence as evidenceTable,
+  explanations as explanationsTable,
+  impactChainSteps as impactChainStepsTable,
+  impactChains as impactChainsTable,
+  marketMetrics as marketMetricsTable,
+} from "@/db/schema";
 import * as sample from "./sample/data";
-import type { Company, Evidence, Exposure, Line, MarketEvent, MarketMetrics, MetricValue, StockExposure } from "./types";
+import type {
+  ChainStep,
+  Claim,
+  Company,
+  CompanyImpact,
+  Evidence,
+  Exposure,
+  Faq,
+  ImpactChain,
+  Line,
+  MarketEvent,
+  MarketMetrics,
+  MetricValue,
+  QA,
+  ReviewStatus,
+  StockExposure,
+  Template,
+} from "./types";
 
 export const IS_SAMPLE_DATA = true;
 
@@ -17,7 +47,7 @@ export const IS_SAMPLE_DATA = true;
  * ไม่ใช้ข้อมูลสมมติมาแทนที่ เพื่อไม่ให้ใครเข้าใจผิดว่าเป็นตัวเลขจริง
  */
 export const getMetrics = cache(async (): Promise<MarketMetrics> => {
-  if (!isDatabaseConfigured()) return sample.metrics; // เช่น รันในเครื่องที่ยังไม่ได้ตั้งค่า DATABASE_URL
+  if (!isDatabaseConfigured()) return sample.metrics;
   try {
     const rows = await getDb().select().from(marketMetricsTable);
     const out: MarketMetrics = {};
@@ -43,29 +73,226 @@ export function allLines(): Line[] {
   return sample.lines;
 }
 
-/** เผยแพร่เฉพาะเหตุการณ์ที่เจ้าของอนุมัติแล้ว */
-export function publishedEvents(): MarketEvent[] {
-  return sample.events.filter((e) => e.reviewStatus === "approved");
-}
-
-export function getEvent(slug: string): MarketEvent | undefined {
-  return publishedEvents().find((e) => e.slug === slug);
-}
-
-export function getEvidence(ids: string[]): Evidence[] {
-  return ids.map((id) => sample.evidence.find((e) => e.id === id)).filter((e): e is Evidence => Boolean(e));
-}
-
-export function getExposure(slug: string, ticker: string): StockExposure | undefined {
-  return sample.exposures.find((x) => x.eventSlug === slug && x.ticker === ticker);
-}
-
-export function allExposures(): StockExposure[] {
-  return sample.exposures.filter((x) => getEvent(x.eventSlug));
-}
-
 export function getCompany(ticker: string): Company | undefined {
   return sample.companies.find((c) => c.ticker === ticker);
+}
+
+// ---------- เหตุการณ์จากฐานข้อมูล (เขียนผ่านหน้าแอดมิน) ----------
+
+type EventRow = typeof eventsTable.$inferSelect;
+
+/** ดึงเหตุการณ์ทุกสถานะจาก DB มาประกอบเป็น MarketEvent — ใช้ทั้งฝั่งเว็บสาธารณะ (approved) และหน้าแอดมิน (ทุกสถานะ) */
+async function loadDbEvents(rows: EventRow[]): Promise<MarketEvent[]> {
+  if (rows.length === 0) return [];
+  const db = getDb();
+  const ids = rows.map((r) => r.id);
+  const [explRows, claimRows, evidenceRows, chainRows, impactRows, entityRows] = await Promise.all([
+    db.select().from(explanationsTable).where(inArray(explanationsTable.eventId, ids)),
+    db.select().from(claimsTable).where(inArray(claimsTable.eventId, ids)),
+    db.select().from(evidenceTable).where(inArray(evidenceTable.eventId, ids)),
+    db.select().from(impactChainsTable).where(inArray(impactChainsTable.eventId, ids)),
+    db.select().from(eventCompanyImpactsTable).where(inArray(eventCompanyImpactsTable.eventId, ids)),
+    db.select().from(entitiesTable),
+  ]);
+  const chainIds = chainRows.map((c) => c.id);
+  const stepRows = chainIds.length
+    ? await db.select().from(impactChainStepsTable).where(inArray(impactChainStepsTable.chainId, chainIds))
+    : [];
+  const claimIds = claimRows.map((c) => c.id);
+  const claimEvRows = claimIds.length
+    ? await db.select().from(claimEvidenceTable).where(inArray(claimEvidenceTable.claimId, claimIds))
+    : [];
+
+  const tickerById = new Map(entityRows.map((e) => [e.id, e.ticker]));
+
+  return rows.map((row): MarketEvent => {
+    const sections = Object.fromEntries(
+      explRows.filter((e) => e.eventId === row.id).map((e) => [e.section, e.contentJson]),
+    ) as Record<string, unknown>;
+    const quick = (sections.quick as MarketEvent["quick"]) ?? { what: "", who: "", tickers: [] };
+    const understand = (sections.understand as QA[]) ?? [];
+    const deep = (sections.deep as MarketEvent["deep"]) ?? { timeline: [], history: { text: "", note: "" }, watch: "" };
+    const faq = (sections.faq as Faq[]) ?? [];
+
+    const claims: Claim[] = claimRows
+      .filter((c) => c.eventId === row.id)
+      .sort((a, b) => a.position - b.position)
+      .map((c) => ({
+        kind: c.kind,
+        text: c.textTemplate,
+        note: c.note ?? undefined,
+        evidenceIds: claimEvRows.filter((ce) => ce.claimId === c.id).map((ce) => String(ce.evidenceId)),
+      }));
+
+    const chains: ImpactChain[] = chainRows
+      .filter((c) => c.eventId === row.id)
+      .map((c) => ({
+        id: String(c.id),
+        label: c.label,
+        ticker: tickerById.get(c.entityId) ?? "?",
+        exposure: c.exposure,
+        steps: stepRows
+          .filter((s) => s.chainId === c.id)
+          .sort((a, b) => a.position - b.position)
+          .map((s): ChainStep => ({ layer: s.layer, name: s.name, desc: s.descTemplate, confidence: s.confidenceLabel, strength: s.strength })),
+      }));
+
+    const impacts: CompanyImpact[] = impactRows
+      .filter((i) => i.eventId === row.id)
+      .map((i) => ({ ticker: tickerById.get(i.entityId) ?? "?", exposure: i.exposure, reason: i.reason }));
+
+    return {
+      slug: row.slug,
+      lineId: row.factorId,
+      title: row.title,
+      updatedAt: row.updatedAt.toISOString(),
+      reviewStatus: row.reviewStatus,
+      explanationSource: { by: row.explanationBy, model: row.explanationModel ?? undefined, promptVersion: row.explanationPromptVersion ?? undefined },
+      quick,
+      understand,
+      claims,
+      deep,
+      faq,
+      chains,
+      impacts,
+      evidenceIds: evidenceRows.filter((e) => e.eventId === row.id).map((e) => String(e.id)),
+    };
+  });
+}
+
+/** เหตุการณ์ทุกเรื่อง (ทุกสถานะ) รวมของตัวอย่าง + ฐานข้อมูล — ใช้ในหน้าแอดมินเท่านั้น */
+export const allEventsAnyStatus = cache(async (): Promise<MarketEvent[]> => {
+  const sampleEvents = sample.events;
+  if (!isDatabaseConfigured()) return sampleEvents;
+  try {
+    const sampleSlugs = new Set(sampleEvents.map((e) => e.slug));
+    const rows = await getDb().select().from(eventsTable);
+    // เหตุการณ์ตัวอย่าง (เช่น oil-supply) ถูก seed เข้า DB ไว้ด้วยตั้งแต่ชิ้นที่ 2 (เผื่อดึงราคาจริง)
+    // แต่เนื้อหายังยึดจากไฟล์ตัวอย่างเป็นหลัก ไม่เอาแถว DB ที่ slug ซ้ำมาแสดงซ้ำ
+    const dbRows = rows.filter((r) => !sampleSlugs.has(r.slug));
+    const dbEvents = await loadDbEvents(dbRows);
+    return [...sampleEvents, ...dbEvents];
+  } catch (err) {
+    console.error("allEventsAnyStatus: อ่านฐานข้อมูลไม่ได้", err);
+    return sampleEvents;
+  }
+});
+
+/** เผยแพร่เฉพาะเหตุการณ์ที่เจ้าของอนุมัติแล้ว (สาธารณะ) */
+export async function publishedEvents(): Promise<MarketEvent[]> {
+  const all = await allEventsAnyStatus();
+  return all.filter((e) => e.reviewStatus === "approved");
+}
+
+export async function getEvent(slug: string): Promise<MarketEvent | undefined> {
+  const all = await publishedEvents();
+  return all.find((e) => e.slug === slug);
+}
+
+/** เหตุการณ์ทุกสถานะ ใช้ในหน้าแอดมิน (ดูรวมถึงที่ยังไม่อนุมัติ) */
+export async function getEventAnyStatus(slug: string): Promise<MarketEvent | undefined> {
+  const all = await allEventsAnyStatus();
+  return all.find((e) => e.slug === slug);
+}
+
+export async function getEvidence(ids: string[]): Promise<Evidence[]> {
+  if (ids.length === 0) return [];
+  const numericIds = ids.map(Number).filter((n) => Number.isInteger(n));
+  const dbIds = new Set(numericIds.map(String));
+  const sampleResult = sample.evidence.filter((e) => ids.includes(e.id) && !dbIds.has(e.id));
+  if (numericIds.length === 0 || !isDatabaseConfigured()) return sampleResult;
+  try {
+    const rows = await getDb().select().from(evidenceTable).where(inArray(evidenceTable.id, numericIds));
+    const dbResult: Evidence[] = rows.map((r) => ({
+      id: String(r.id),
+      sourceName: r.sourceName,
+      kind: r.kind,
+      note: r.note,
+      url: r.url,
+      linkLabel: r.linkLabel,
+      publishedAt: r.publishedAt?.toISOString() ?? null,
+      retrievedAt: r.retrievedAt?.toISOString() ?? null,
+    }));
+    return [...sampleResult, ...dbResult];
+  } catch (err) {
+    console.error("getEvidence: อ่านฐานข้อมูลไม่ได้", err);
+    return sampleResult;
+  }
+}
+
+// ---------- หลักฐาน 4 ชั้นของหุ้น (ทำไมถึงเป็นหุ้นตัวนี้) ----------
+
+async function loadDbExposure(eventSlug: string, ticker: string): Promise<StockExposure | undefined> {
+  if (!isDatabaseConfigured()) return undefined;
+  try {
+    const db = getDb();
+    const [eventRow] = await db.select().from(eventsTable).where(eq(eventsTable.slug, eventSlug));
+    const [entityRow] = await db.select().from(entitiesTable).where(eq(entitiesTable.ticker, ticker));
+    if (!eventRow || !entityRow) return undefined;
+    const [row] = await db
+      .select()
+      .from(companyExposuresTable)
+      .where(and(eq(companyExposuresTable.entityId, entityRow.id), eq(companyExposuresTable.factorId, eventRow.factorId)));
+    if (!row) return undefined;
+    return {
+      eventSlug,
+      ticker,
+      exposure: row.exposure,
+      confidence: row.confidence as StockExposure["confidence"],
+      summary: row.summary,
+      layers: row.layers as StockExposure["layers"],
+      today: row.today as StockExposure["today"],
+    };
+  } catch (err) {
+    console.error("loadDbExposure: อ่านฐานข้อมูลไม่ได้", err);
+    return undefined;
+  }
+}
+
+export async function getExposure(slug: string, ticker: string): Promise<StockExposure | undefined> {
+  const fromSample = sample.exposures.find((x) => x.eventSlug === slug && x.ticker === ticker);
+  if (fromSample) return fromSample;
+  return loadDbExposure(slug, ticker);
+}
+
+/** ใช้ใน generateStaticParams ของหน้า why-stock — ต้องรู้ล่วงหน้าว่ามี (event, ticker) คู่ไหนบ้าง */
+export async function allExposures(): Promise<StockExposure[]> {
+  const published = await publishedEvents();
+  const publishedSlugs = new Set(published.map((e) => e.slug));
+  const fromSample = sample.exposures.filter((x) => publishedSlugs.has(x.eventSlug));
+
+  if (!isDatabaseConfigured()) return fromSample;
+  try {
+    const db = getDb();
+    const dbEventSlugs = published.filter((e) => !sample.events.some((s) => s.slug === e.slug)).map((e) => e.slug);
+    if (dbEventSlugs.length === 0) return fromSample;
+    const rows = await db.select().from(companyExposuresTable);
+    const entityRows = await db.select().from(entitiesTable);
+    const tickerById = new Map(entityRows.map((e) => [e.id, e.ticker]));
+    const factorByEvent = new Map(published.map((e) => [e.slug, e.lineId]));
+    const out: StockExposure[] = [...fromSample];
+    for (const slug of dbEventSlugs) {
+      const factorId = factorByEvent.get(slug);
+      for (const row of rows) {
+        if (row.factorId !== factorId) continue;
+        const ticker = tickerById.get(row.entityId);
+        if (!ticker) continue;
+        out.push({
+          eventSlug: slug,
+          ticker,
+          exposure: row.exposure,
+          confidence: row.confidence as StockExposure["confidence"],
+          summary: row.summary,
+          layers: row.layers as StockExposure["layers"],
+          today: row.today as StockExposure["today"],
+        });
+      }
+    }
+    return out;
+  } catch (err) {
+    console.error("allExposures: อ่านฐานข้อมูลไม่ได้", err);
+    return fromSample;
+  }
 }
 
 export interface RelatedStory {
@@ -77,17 +304,23 @@ export interface RelatedStory {
 }
 
 /** เรื่องที่เกี่ยวข้องกับหุ้นหนึ่งตัว ใช้ในหน้าค้นหุ้น */
-export function storiesForTicker(ticker: string): RelatedStory[] {
-  const fromEvents: RelatedStory[] = publishedEvents().flatMap((e) =>
-    e.impacts
-      .filter((i) => i.ticker === ticker)
-      .map((i) => ({
+export async function storiesForTicker(ticker: string): Promise<RelatedStory[]> {
+  const published = await publishedEvents();
+  const fromEvents: RelatedStory[] = [];
+  for (const e of published) {
+    for (const i of e.impacts) {
+      if (i.ticker !== ticker) continue;
+      const exposure = await getExposure(e.slug, ticker);
+      fromEvents.push({
         title: e.title,
         sub: `วันนี้, ${i.reason}`,
         exposure: i.exposure,
         lineId: e.lineId,
-        href: getExposure(e.slug, ticker) ? `/event/${e.slug}/stock/${ticker}` : `/event/${e.slug}`,
-      })),
-  );
+        href: exposure ? `/event/${e.slug}/stock/${ticker}` : `/event/${e.slug}`,
+      });
+    }
+  }
   return [...fromEvents, ...(sample.relatedPlaceholders[ticker] ?? [])];
 }
+
+export type { Template };

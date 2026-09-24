@@ -7,15 +7,17 @@ import { BackBar } from "@/components/BackBar";
 import { Footer } from "@/components/Footer";
 import { MarkEvidenceOpened } from "@/components/GameProvider";
 import { dirClass, T } from "@/components/Metric";
-import { allExposures, getCompany, getEvent, getExposure, getLine, getMetrics } from "@/lib/data";
+import { getCompany, getEvent, getExposure, getLine, getMetrics } from "@/lib/data";
 import { EXPOSURE_LONG } from "@/lib/labels";
 
 type Props = { params: Promise<{ slug: string; ticker: string }> };
 
+// ไม่ prerender ตอน build เลย (ต้องคุย DB ข้ามภูมิภาคกับเครื่อง build ของ Vercel ซึ่งช้าเกินเวลาที่กำหนดตอน build)
+// หน้าจะสร้างตอนมีคนเข้าดูครั้งแรกแทน แล้วแคชไว้ตาม revalidate ด้านล่าง
 export function generateStaticParams() {
-  return allExposures().map((x) => ({ slug: x.eventSlug, ticker: x.ticker }));
+  return [];
 }
-export const dynamicParams = false;
+export const dynamicParams = true;
 
 // ราคาที่แสดงมาจากฐานข้อมูล อัปเดตทุกคืนผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
 export const revalidate = 1800;
@@ -27,8 +29,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function WhyStockPage({ params }: Props) {
   const { slug, ticker } = await params;
-  const event = getEvent(slug);
-  const x = getExposure(slug, ticker);
+  const [event, x] = await Promise.all([getEvent(slug), getExposure(slug, ticker)]);
   const company = getCompany(ticker);
   if (!event || !x || !company) notFound();
   const line = getLine(event.lineId);

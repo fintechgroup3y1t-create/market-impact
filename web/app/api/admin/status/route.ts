@@ -3,7 +3,7 @@
 import { sql } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb, isDatabaseConfigured } from "@/db/client";
-import { entities, events, marketMetrics } from "@/db/schema";
+import { documents, entities, events, marketMetrics } from "@/db/schema";
 import { checkAdminSecret } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
@@ -17,6 +17,7 @@ export async function GET(request: Request) {
     tiingoKeySet: Boolean(process.env.TIINGO_API_KEY),
     fredKeySet: Boolean(process.env.FRED_API_KEY),
     eiaKeySet: Boolean(process.env.EIA_API_KEY),
+    marketauxKeySet: Boolean(process.env.MARKETAUX_API_KEY),
     cronSecretSet: Boolean(process.env.CRON_SECRET),
   };
 
@@ -30,6 +31,7 @@ export async function GET(request: Request) {
         events: (await db.select().from(events)).length,
         entities: (await db.select().from(entities)).length,
         marketMetrics: metricRows.length,
+        documents: (await db.select().from(documents)).length,
       };
       // แสดงรายละเอียดตัวเลขล่าสุดเพื่อไล่ปัญหา (ไม่ใช่ข้อมูลลับ แค่ตัวเลขตลาด)
       result.marketMetricsDetail = metricRows.map((r) => `${r.entityKey}.${r.metric}=${r.value} (${r.asOfDate})`);
