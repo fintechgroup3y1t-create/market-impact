@@ -16,16 +16,17 @@ import type { ClaimKind } from "@/lib/types";
 
 type Props = { params: Promise<{ slug: string }> };
 
-export function generateStaticParams() {
-  return publishedEvents().map((e) => ({ slug: e.slug }));
+export async function generateStaticParams() {
+  const events = await publishedEvents();
+  return events.map((e) => ({ slug: e.slug }));
 }
-export const dynamicParams = false;
+export const dynamicParams = true; // เหตุการณ์ใหม่จากหน้าแอดมินอาจยังไม่ถูก prerender ไว้ตอน build
 
 // ราคาที่แสดงมาจากฐานข้อมูล อัปเดตทุกคืนผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
 export const revalidate = 1800;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const e = getEvent((await params).slug);
+  const e = await getEvent((await params).slug);
   return { title: e?.title };
 }
 
@@ -37,19 +38,28 @@ const CLAIM_LABEL: Record<ClaimKind, { mk: string; name: string }> = {
 
 export default async function EventPage({ params }: Props) {
   const { slug } = await params;
-  const event = getEvent(slug);
+  const event = await getEvent(slug);
   if (!event) notFound();
   const line = getLine(event.lineId);
-  const sources = getEvidence(event.evidenceIds);
-  const stockHref = (ticker: string) => (getExposure(slug, ticker) ? `/event/${slug}/stock/${ticker}` : null);
-  const metrics = await getMetrics();
+  const [sources, metrics] = await Promise.all([getEvidence(event.evidenceIds), getMetrics()]);
+
+  // หา href ของหน้า "ทำไมถึงเป็นหุ้นตัวนี้" ล่วงหน้าสำหรับทุก ticker ที่ปรากฏในหน้านี้ (chains + impacts)
+  const allTickers = [...new Set([...event.chains.map((c) => c.ticker), ...event.impacts.map((i) => i.ticker)])];
+  const hrefEntries = await Promise.all(
+    allTickers.map(async (ticker) => [ticker, (await getExposure(slug, ticker)) ? `/event/${slug}/stock/${ticker}` : null] as const),
+  );
+  const hrefs = Object.fromEntries(hrefEntries);
+  const stockHref = (ticker: string) => hrefs[ticker] ?? null;
+
+  const claimsWithSources = await Promise.all(
+    event.claims.map(async (c) => ({ ...c, sourceNames: (await getEvidence(c.evidenceIds)).map((e) => e.sourceName) })),
+  );
 
   // เติมตัวเลขบนเซิร์ฟเวอร์ก่อนส่งให้ส่วนที่กดสลับได้
   const chains = event.chains.map((c) => ({
     ...c,
     steps: c.steps.map((s) => ({ ...s, desc: fillTemplate(s.desc, metrics) })),
   }));
-  const hrefs = Object.fromEntries(event.chains.map((c) => [c.ticker, stockHref(c.ticker)]));
 
   return (
     <>
@@ -95,18 +105,14 @@ export default async function EventPage({ params }: Props) {
         <section className="sec">
           <h2>แยกให้ชัดว่าอะไรคือข้อเท็จจริง</h2>
           <div className="fau">
-            {event.claims.map((c) => (
+            {claimsWithSources.map((c) => (
               <div key={c.text} className="r">
                 <span className={`mk ${CLAIM_LABEL[c.kind].mk}`} aria-hidden="true" />
                 <div>
                   <div className="k">{CLAIM_LABEL[c.kind].name}</div>
                   <p><T text={c.text} metrics={metrics} /></p>
                   {c.note && <p className="s2">{c.note}</p>}
-                  {c.evidenceIds.length > 0 && (
-                    <p className="s2">
-                      หลักฐาน: {getEvidence(c.evidenceIds).map((e) => e.sourceName).join(", ")}
-                    </p>
-                  )}
+                  {c.sourceNames.length > 0 && <p className="s2">หลักฐาน: {c.sourceNames.join(", ")}</p>}
                 </div>
               </div>
             ))}

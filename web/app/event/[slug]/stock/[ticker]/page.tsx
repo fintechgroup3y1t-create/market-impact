@@ -12,10 +12,11 @@ import { EXPOSURE_LONG } from "@/lib/labels";
 
 type Props = { params: Promise<{ slug: string; ticker: string }> };
 
-export function generateStaticParams() {
-  return allExposures().map((x) => ({ slug: x.eventSlug, ticker: x.ticker }));
+export async function generateStaticParams() {
+  const exposures = await allExposures();
+  return exposures.map((x) => ({ slug: x.eventSlug, ticker: x.ticker }));
 }
-export const dynamicParams = false;
+export const dynamicParams = true; // หลักฐานใหม่จากหน้าแอดมินอาจยังไม่ถูก prerender ไว้ตอน build
 
 // ราคาที่แสดงมาจากฐานข้อมูล อัปเดตทุกคืนผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
 export const revalidate = 1800;
@@ -27,8 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function WhyStockPage({ params }: Props) {
   const { slug, ticker } = await params;
-  const event = getEvent(slug);
-  const x = getExposure(slug, ticker);
+  const [event, x] = await Promise.all([getEvent(slug), getExposure(slug, ticker)]);
   const company = getCompany(ticker);
   if (!event || !x || !company) notFound();
   const line = getLine(event.lineId);

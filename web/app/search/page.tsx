@@ -13,18 +13,21 @@ export const revalidate = 1800;
 
 export default async function SearchPage() {
   const metrics = await getMetrics();
-  const entries: SearchEntry[] = companies.map((c) => {
-    const tpl = `{{${c.ticker}.ret_1d}}`;
-    return {
-      ticker: c.ticker,
-      name: c.name,
-      covered: c.covered,
-      ret: fillTemplate(tpl, metrics),
-      dir: dirClass(tpl, metrics) as SearchEntry["dir"],
-      sensitivities: c.sensitivities,
-      stories: storiesForTicker(c.ticker).map((s) => ({ ...s, color: lineVar(getLine(s.lineId)) })),
-    };
-  });
+  const entries: SearchEntry[] = await Promise.all(
+    companies.map(async (c) => {
+      const tpl = `{{${c.ticker}.ret_1d}}`;
+      const stories = await storiesForTicker(c.ticker);
+      return {
+        ticker: c.ticker,
+        name: c.name,
+        covered: c.covered,
+        ret: fillTemplate(tpl, metrics),
+        dir: dirClass(tpl, metrics) as SearchEntry["dir"],
+        sensitivities: c.sensitivities,
+        stories: stories.map((s) => ({ ...s, color: lineVar(getLine(s.lineId)) })),
+      };
+    }),
+  );
   return (
     <>
       <h1 className="mood" style={{ marginTop: 22, fontSize: 34 }}>
