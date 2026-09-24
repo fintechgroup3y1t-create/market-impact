@@ -31,9 +31,13 @@ async function upsertPrice(ticker: string, asOfDate: string, close: number) {
 }
 
 export async function GET(request: Request) {
-  // Vercel ใส่ header นี้ให้อัตโนมัติเมื่อยิงจาก Cron จริง ป้องกันคนนอกยิง endpoint นี้เอง
+  // อนุญาต 2 ทาง: (1) Vercel ใส่ header นี้ให้อัตโนมัติเมื่อยิงจาก Cron จริงตามเวลา
+  // (2) เปิดลิงก์เองพร้อม ?secret=ADMIN_SECRET เพื่อทดสอบดึงราคาด้วยมือ (ดู lib/admin-auth.ts)
   const auth = request.headers.get("authorization");
-  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  const isCron = process.env.CRON_SECRET && auth === `Bearer ${process.env.CRON_SECRET}`;
+  const manualSecret = request.headers.get("x-admin-secret") ?? new URL(request.url).searchParams.get("secret");
+  const isManual = process.env.ADMIN_SECRET && manualSecret === process.env.ADMIN_SECRET;
+  if (!isCron && !isManual) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
   if (!isDatabaseConfigured()) {
