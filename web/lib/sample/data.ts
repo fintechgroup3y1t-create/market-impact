@@ -229,6 +229,30 @@ export const events: MarketEvent[] = [
           { layer: "บริษัท", name: "Southwest Airlines", desc: "รายงานประจำปี [ปี] ระบุค่าเชื้อเพลิงราว [x%] ของต้นทุนดำเนินงาน บริษัทเคยใช้สัญญาซื้อน้ำมันล่วงหน้า (hedge) เป็นประจำ", confidence: "ความมั่นใจ กลาง", strength: "solid" },
         ],
       },
+      {
+        id: "to-logistics",
+        label: "ไปบริษัทขนส่ง",
+        ticker: "FDX",
+        exposure: "neg",
+        steps: [
+          { layer: "เหตุการณ์", name: "ราคาน้ำมันดิบปรับขึ้น", desc: "ราคา WTI เพิ่มขึ้น {{WTI.ret_1d|abs}} ในวันนี้", confidence: "ข้อเท็จจริงจากข้อมูลตลาด", strength: "solid" },
+          { layer: "เศรษฐกิจ", name: "ต้นทุนพลังงานสูงขึ้น", desc: "น้ำมันดิบถูกกลั่นเป็นน้ำมันเครื่องบินและดีเซลที่กองรถขนส่งใช้ ราคาจึงมักขยับตามกัน", confidence: "ความมั่นใจ สูง", strength: "solid" },
+          { layer: "อุตสาหกรรม", name: "ขนส่งและโลจิสติกส์", desc: "ค่าเชื้อเพลิงเครื่องบินขนส่งและรถบรรทุกเป็นต้นทุนก้อนใหญ่ของธุรกิจนี้", confidence: "ความมั่นใจ สูง", strength: "dashed" },
+          { layer: "บริษัท", name: "FedEx", desc: "รายงานประจำปี [ปี] ระบุค่าเชื้อเพลิงราว [x%] ของต้นทุนดำเนินงาน บริษัทมีค่าธรรมเนียมเชื้อเพลิง (fuel surcharge) ที่ปรับตามราคาน้ำมันช่วยชดเชยได้บางส่วน", confidence: "ความมั่นใจ กลาง", strength: "solid" },
+        ],
+      },
+      {
+        id: "to-chemicals",
+        label: "ไปบริษัทเคมีภัณฑ์",
+        ticker: "DOW",
+        exposure: "neg",
+        steps: [
+          { layer: "เหตุการณ์", name: "ราคาน้ำมันดิบปรับขึ้น", desc: "ราคา WTI เพิ่มขึ้น {{WTI.ret_1d|abs}} ในวันนี้", confidence: "ข้อเท็จจริงจากข้อมูลตลาด", strength: "solid" },
+          { layer: "เศรษฐกิจ", name: "ต้นทุนวัตถุดิบปิโตรเคมีสูงขึ้น", desc: "น้ำมันและก๊าซธรรมชาติเป็นวัตถุดิบตั้งต้น (feedstock) ของอุตสาหกรรมเคมีภัณฑ์ ราคาที่สูงขึ้นจึงเป็นต้นทุนโดยตรง", confidence: "ความมั่นใจ สูง", strength: "solid" },
+          { layer: "อุตสาหกรรม", name: "เคมีภัณฑ์", desc: "ต้นทุนวัตถุดิบเป็นสัดส่วนใหญ่ของต้นทุนการผลิตในอุตสาหกรรมนี้", confidence: "ความมั่นใจ สูง", strength: "dashed" },
+          { layer: "บริษัท", name: "Dow Inc", desc: "รายงานประจำปี [ปี] ระบุว่าใช้ปิโตรเลียมและก๊าซธรรมชาติเป็นวัตถุดิบหลัก อาจส่งต่อต้นทุนผ่านราคาขายได้บางส่วนแต่มักช้ากว่าที่ต้นทุนเพิ่มขึ้น", confidence: "ความมั่นใจ กลาง", strength: "solid" },
+        ],
+      },
     ],
     impacts: [
       { ticker: "XOM", exposure: "pos", reason: "รายได้หลักจากการขายน้ำมัน" },
@@ -238,6 +262,9 @@ export const events: MarketEvent[] = [
       { ticker: "UAL", exposure: "neg", reason: "ค่าเชื้อเพลิงเป็นต้นทุนหลัก" },
       { ticker: "LUV", exposure: "neg", reason: "ค่าเชื้อเพลิงเป็นต้นทุนหลัก" },
       { ticker: "UPS", exposure: "neg", reason: "ค่าน้ำมันเชื้อเพลิงกองรถขนส่งเป็นต้นทุนหลัก" },
+      { ticker: "FDX", exposure: "neg", reason: "ค่าน้ำมันเชื้อเพลิงกองรถขนส่งเป็นต้นทุนหลัก" },
+      { ticker: "DOW", exposure: "neg", reason: "น้ำมัน/ก๊าซธรรมชาติเป็นวัตถุดิบตั้งต้นของธุรกิจ" },
+      { ticker: "CAT", exposure: "neg", reason: "ต้นทุนพลังงานในการผลิตและขนส่งเครื่องจักรสูงขึ้น" },
     ],
     evidenceIds: ["ev-news-oil", "ev-eia-wpsr", "ev-dal-10k", "ev-xom-10k", "ev-market"],
   },
@@ -432,6 +459,98 @@ export const exposures: StockExposure[] = [
       { label: "ต่างจากตลาด", value: "{{LUV.abn_ret_1d}}", emphasis: true },
     ],
   },
+  {
+    eventSlug: "oil-supply",
+    ticker: "FDX",
+    exposure: "neg",
+    confidence: "กลาง",
+    summary: "หลักฐาน 3 จาก 4 ชั้นชี้ไปทางเดียวกัน อีกชั้นหนึ่งมีปัจจัยที่อาจช่วยลดผลกระทบ",
+    layers: [
+      {
+        title: "กลไกทางธุรกิจ",
+        signal: "support",
+        text: "น้ำมันแพง ทำให้ค่าน้ำมันเครื่องบินขนส่งและรถบรรทุกแพงขึ้น ต้นทุนต่อการจัดส่งจึงสูงขึ้น",
+        note: "กฎที่ทีมงานตรวจสอบแล้ว",
+      },
+      {
+        title: "จากงบการเงินของบริษัท",
+        signal: "support",
+        kv: [
+          { k: "สัดส่วนค่าเชื้อเพลิง", v: "[x%] ของต้นทุน" },
+          { k: "จำนวนเครื่องบินขนส่ง", v: "[จำนวน] ลำ" },
+        ],
+        note: "",
+        link: { href: "/event/oil-supply#sources", label: "SEC 10-K ปี [ปี], ดูหน้าที่อ้างอิง" },
+      },
+      {
+        title: "ปฏิกิริยาในอดีต",
+        signal: "support",
+        kv: [{ k: "Beta ต่อราคาน้ำมัน (2 ปี)", v: "{{FDX.beta_oil_2y}}" }],
+        glossary: {
+          term: "Beta",
+          def: "บอกว่าในอดีตหุ้นตัวนี้ขยับตามปัจจัยนั้นมากน้อยแค่ไหน ค่าติดลบแปลว่ามักขยับสวนทาง",
+        },
+        note: "คำนวณโดยระบบ ไม่ใช่ AI",
+      },
+      {
+        title: "ปัจจัยที่อาจช่วยลดผลกระทบ",
+        signal: "offset",
+        text: "บริษัทมีค่าธรรมเนียมเชื้อเพลิง (fuel surcharge) ที่ปรับขึ้นตามราคาน้ำมันอัตโนมัติ ซึ่งช่วยส่งต่อต้นทุนบางส่วนให้ลูกค้า",
+        note: "อ้างอิง SEC 10-K, ทีมงานตรวจแล้ว",
+      },
+    ],
+    today: [
+      { label: "FDX", value: "{{FDX.ret_1d}}" },
+      { label: "S&P 500", value: "{{SPX.ret_1d}}" },
+      { label: "ต่างจากตลาด", value: "{{FDX.abn_ret_1d}}", emphasis: true },
+    ],
+  },
+  {
+    eventSlug: "oil-supply",
+    ticker: "DOW",
+    exposure: "neg",
+    confidence: "กลาง",
+    summary: "หลักฐาน 3 จาก 4 ชั้นชี้ไปทางเดียวกัน อีกชั้นหนึ่งมีปัจจัยที่อาจช่วยลดผลกระทบ",
+    layers: [
+      {
+        title: "กลไกทางธุรกิจ",
+        signal: "support",
+        text: "น้ำมันและก๊าซธรรมชาติเป็นวัตถุดิบตั้งต้น (feedstock) ของอุตสาหกรรมเคมีภัณฑ์ ราคาที่สูงขึ้นจึงเป็นต้นทุนโดยตรง",
+        note: "กฎที่ทีมงานตรวจสอบแล้ว",
+      },
+      {
+        title: "จากงบการเงินของบริษัท",
+        signal: "support",
+        kv: [
+          { k: "สัดส่วนต้นทุนวัตถุดิบ", v: "[x%] ของต้นทุน" },
+          { k: "แหล่งวัตถุดิบหลัก", v: "[ภูมิภาค]" },
+        ],
+        note: "",
+        link: { href: "/event/oil-supply#sources", label: "SEC 10-K ปี [ปี], ดูหน้าที่อ้างอิง" },
+      },
+      {
+        title: "ปฏิกิริยาในอดีต",
+        signal: "support",
+        kv: [{ k: "Beta ต่อราคาน้ำมัน (2 ปี)", v: "{{DOW.beta_oil_2y}}" }],
+        glossary: {
+          term: "Beta",
+          def: "บอกว่าในอดีตหุ้นตัวนี้ขยับตามปัจจัยนั้นมากน้อยแค่ไหน ค่าติดลบแปลว่ามักขยับสวนทาง",
+        },
+        note: "คำนวณโดยระบบ ไม่ใช่ AI",
+      },
+      {
+        title: "ปัจจัยที่อาจช่วยลดผลกระทบ",
+        signal: "offset",
+        text: "บริษัทอาจส่งต่อต้นทุนผ่านราคาขายผลิตภัณฑ์เคมีภัณฑ์ได้บางส่วน แต่มักทำได้ช้ากว่าที่ต้นทุนวัตถุดิบเพิ่มขึ้น",
+        note: "อ้างอิง SEC 10-K, ทีมงานตรวจแล้ว",
+      },
+    ],
+    today: [
+      { label: "DOW", value: "{{DOW.ret_1d}}" },
+      { label: "S&P 500", value: "{{SPX.ret_1d}}" },
+      { label: "ต่างจากตลาด", value: "{{DOW.abn_ret_1d}}", emphasis: true },
+    ],
+  },
 ];
 
 export const companies: Company[] = [
@@ -457,6 +576,19 @@ export const companies: Company[] = [
   { ticker: "FCX", name: "Freeport-McMoRan", sector: "กลุ่มเหมืองแร่ทองแดง", covered: true, sensitivities: ["ค่าเงินดอลลาร์", "ความต้องการโลหะอุตสาหกรรม"] },
   { ticker: "DHI", name: "D.R. Horton", sector: "กลุ่มพัฒนาอสังหาริมทรัพย์", covered: true, sensitivities: ["ดอกเบี้ย", "ความต้องการที่อยู่อาศัย"] },
   { ticker: "VZ", name: "Verizon", sector: "กลุ่มสื่อสารโทรคมนาคม", covered: true, sensitivities: ["ดอกเบี้ย", "ต้นทุนเครือข่าย"] },
+  { ticker: "T", name: "AT&T", sector: "กลุ่มสื่อสารโทรคมนาคม", covered: true, sensitivities: ["ดอกเบี้ย", "ต้นทุนเครือข่าย"] },
+  { ticker: "JNJ", name: "Johnson & Johnson", sector: "กลุ่มเวชภัณฑ์และสุขภาพ", covered: true, sensitivities: ["ดอกเบี้ย", "กฎระเบียบด้านสุขภาพ"] },
+  { ticker: "PFE", name: "Pfizer", sector: "กลุ่มเวชภัณฑ์และสุขภาพ", covered: true, sensitivities: ["ดอกเบี้ย", "ค่าเงินดอลลาร์"] },
+  { ticker: "AMD", name: "Advanced Micro Devices", sector: "กลุ่มเซมิคอนดักเตอร์", covered: true, sensitivities: ["ดอกเบี้ย", "การลงทุนด้าน AI"] },
+  { ticker: "INTC", name: "Intel", sector: "กลุ่มเซมิคอนดักเตอร์", covered: true, sensitivities: ["ดอกเบี้ย", "ความต้องการชิป"] },
+  { ticker: "AMZN", name: "Amazon", sector: "กลุ่มค้าปลีกออนไลน์", covered: true, sensitivities: ["ดอกเบี้ย", "การใช้จ่ายของผู้บริโภค"] },
+  { ticker: "MCD", name: "McDonald's", sector: "กลุ่มร้านอาหาร", covered: true, sensitivities: ["เงินเฟ้อ", "ค่าเงินดอลลาร์"] },
+  { ticker: "CAT", name: "Caterpillar", sector: "กลุ่มเครื่องจักรอุตสาหกรรม", covered: true, sensitivities: ["ราคาน้ำมัน", "วัฏจักรเศรษฐกิจโลก"] },
+  { ticker: "BA", name: "Boeing", sector: "กลุ่มอากาศยาน", covered: true, sensitivities: ["ราคาน้ำมัน", "คำสั่งซื้อจากสายการบิน"] },
+  { ticker: "DOW", name: "Dow Inc", sector: "กลุ่มเคมีภัณฑ์", covered: true, sensitivities: ["ราคาน้ำมัน", "ราคาก๊าซธรรมชาติ"] },
+  { ticker: "NEE", name: "NextEra Energy", sector: "กลุ่มสาธารณูปโภคไฟฟ้า", covered: true, sensitivities: ["ดอกเบี้ย", "นโยบายพลังงานสะอาด"] },
+  { ticker: "GOLD", name: "Barrick Gold", sector: "กลุ่มเหมืองทอง", covered: true, sensitivities: ["ราคาทองคำ", "ค่าเงินดอลลาร์"] },
+  { ticker: "FDX", name: "FedEx", sector: "กลุ่มขนส่งและโลจิสติกส์", covered: true, sensitivities: ["ราคาน้ำมัน", "ปริมาณการซื้อของออนไลน์"] },
   { ticker: "XYZW", name: "[บริษัทที่ยังไม่ครอบคลุม]", sector: "", covered: false, sensitivities: [] },
 ];
 
