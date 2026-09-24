@@ -9,7 +9,7 @@ import { WithGlossary } from "@/components/Glossary";
 import { lineVar } from "@/components/LineBadge";
 import { T } from "@/components/Metric";
 import { Sources } from "@/components/Sources";
-import { getEvent, getEvidence, getExposure, getLine, metrics, publishedEvents } from "@/lib/data";
+import { getEvent, getEvidence, getExposure, getLine, getMetrics, publishedEvents } from "@/lib/data";
 import { fillTemplate, thaiTime } from "@/lib/format";
 import { EXPOSURE_SHORT } from "@/lib/labels";
 import type { ClaimKind } from "@/lib/types";
@@ -20,6 +20,9 @@ export function generateStaticParams() {
   return publishedEvents().map((e) => ({ slug: e.slug }));
 }
 export const dynamicParams = false;
+
+// ราคาที่แสดงมาจากฐานข้อมูล อัปเดตทุกคืนผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
+export const revalidate = 1800;
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const e = getEvent((await params).slug);
@@ -39,6 +42,7 @@ export default async function EventPage({ params }: Props) {
   const line = getLine(event.lineId);
   const sources = getEvidence(event.evidenceIds);
   const stockHref = (ticker: string) => (getExposure(slug, ticker) ? `/event/${slug}/stock/${ticker}` : null);
+  const metrics = await getMetrics();
 
   // เติมตัวเลขบนเซิร์ฟเวอร์ก่อนส่งให้ส่วนที่กดสลับได้
   const chains = event.chains.map((c) => ({
@@ -96,7 +100,7 @@ export default async function EventPage({ params }: Props) {
                 <span className={`mk ${CLAIM_LABEL[c.kind].mk}`} aria-hidden="true" />
                 <div>
                   <div className="k">{CLAIM_LABEL[c.kind].name}</div>
-                  <p><T text={c.text} /></p>
+                  <p><T text={c.text} metrics={metrics} /></p>
                   {c.note && <p className="s2">{c.note}</p>}
                   {c.evidenceIds.length > 0 && (
                     <p className="s2">
@@ -116,14 +120,14 @@ export default async function EventPage({ params }: Props) {
               {event.deep.timeline.map((t) => (
                 <div key={t.when + t.text} className="row">
                   <span className="when">{t.when}</span>
-                  <span><T text={t.text} /></span>
+                  <span><T text={t.text} metrics={metrics} /></span>
                 </div>
               ))}
             </div>
             <details className="q" open>
               <summary>ในอดีตเกิดอะไรขึ้นในสถานการณ์คล้ายกัน</summary>
               <div className="ans">
-                <T text={event.deep.history.text} />
+                <T text={event.deep.history.text} metrics={metrics} />
                 <span className="small">{event.deep.history.note}</span>
               </div>
             </details>

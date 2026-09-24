@@ -7,10 +7,14 @@ import { lineVar } from "@/components/LineBadge";
 import { Arrowed, dirClass } from "@/components/Metric";
 import { Quiz } from "@/components/Quiz";
 import { ThemeToggle } from "@/components/ThemeToggle";
-import { allLines, getLine, home } from "@/lib/data";
+import { allLines, getLine, getMetrics, home } from "@/lib/data";
 import { thaiDayMonth, thaiTime } from "@/lib/format";
 
-export default function HomePage() {
+// ราคาที่แสดงมาจากฐานข้อมูล อัปเดตทุกคืนผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
+export const revalidate = 1800;
+
+export default async function HomePage() {
+  const metrics = await getMetrics();
   return (
     <>
       <header className="top">
@@ -38,8 +42,8 @@ export default function HomePage() {
           return (
             <div key={p.metric}>
               <span>{p.label}</span>
-              <b className={colored ? dirClass(tpl) : undefined}>
-                <Arrowed text={tpl} />
+              <b className={colored ? dirClass(tpl, metrics) : undefined}>
+                <Arrowed text={tpl} metrics={metrics} />
               </b>
             </div>
           );
