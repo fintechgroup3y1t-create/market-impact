@@ -1,0 +1,72 @@
+import type { Metadata } from "next";
+import Link from "next/link";
+import type { CSSProperties } from "react";
+import { Footer } from "@/components/Footer";
+import { lineVar } from "@/components/LineBadge";
+import { calendar, getLine } from "@/lib/data";
+
+export const metadata: Metadata = { title: "ปฏิทินเศรษฐกิจ" };
+
+export default function CalendarPage() {
+  const groups = [...new Set(calendar.map((c) => c.group))];
+  return (
+    <>
+      <h1 className="mood" style={{ marginTop: 22, fontSize: 34 }}>
+        ตัวเลขที่ตลาด
+        <br />
+        กำลังรอ
+      </h1>
+      <p className="muted" style={{ marginTop: 8, fontSize: 14 }}>
+        เวลาประเทศไทย ตารางจากหน่วยงานทางการ แตะแต่ละรายการเพื่อดูว่าตัวเลขส่งผลอย่างไร
+      </p>
+
+      {groups.map((g) => (
+        <section key={g} aria-label={g}>
+          <h2 className="day">{g}</h2>
+          {calendar
+            .filter((c) => c.group === g)
+            .map((c) => {
+              const line = getLine(c.lineId);
+              return (
+                <div key={c.name} className="ev">
+                  <span className="when">{c.when}</span>
+                  <div>
+                    <span className="tag" style={c.status === "released" ? { color: "var(--pos)" } : undefined}>{c.importance}</span>
+                    <div className="nm">{c.name}</div>
+                    {line && (
+                      <span className="lk" style={{ "--lc": lineVar(line) } as CSSProperties}>
+                        <i />
+                        อยู่บน{line.name}วันนี้
+                      </span>
+                    )}
+                    <div className="vals">
+                      {c.values.map((v) => (
+                        <span key={v.label}>
+                          {v.label} <b>{v.value}</b>
+                        </span>
+                      ))}
+                    </div>
+                    <details className="q">
+                      <summary>{c.explainer.q}</summary>
+                      <div className="ans">
+                        {c.explainer.a}
+                        {c.explainer.link && (
+                          <>
+                            {" "}
+                            <Link href={c.explainer.link.href}>{c.explainer.link.label}</Link>
+                          </>
+                        )}
+                        <span className="small">{c.explainer.source}</span>
+                      </div>
+                    </details>
+                  </div>
+                </div>
+              );
+            })}
+        </section>
+      ))}
+      <p className="small" style={{ marginTop: 16 }}>ยังไม่แสดงตัวเลขที่ตลาดคาดการณ์ไว้ เพราะเป็นข้อมูลที่ต้องซื้อ จะเพิ่มในเฟสถัดไป</p>
+      <Footer />
+    </>
+  );
+}
