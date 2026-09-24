@@ -128,7 +128,7 @@ export default function AdminPage() {
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error ?? "ไม่ทราบสาเหตุ");
-      setMessage(`สร้างเหตุการณ์ "${data.slug}" แล้ว (สถานะ: รอตรวจ) เลื่อนขึ้นไปดูรายการด้านบนแล้วกดอนุมัติได้เลย`);
+      setMessage(`สร้างเหตุการณ์ "${data.slug}" แล้ว ขึ้นเว็บจริงทันที (กด "ถอดออกจากเว็บ" ด้านบนได้ถ้าต้องการแก้ไข)`);
       await refresh();
     } catch (err) {
       setMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`);
@@ -172,7 +172,7 @@ export default function AdminPage() {
   return (
     <div style={{ maxWidth: 720, margin: "0 auto", padding: "20px 16px 80px" }}>
       <h1 className="mood" style={{ fontSize: 28 }}>หน้าแอดมิน</h1>
-      <p className="small">คิวอนุมัติเหตุการณ์และ claim — เฉพาะเจ้าของ</p>
+      <p className="small">เหตุการณ์ที่เขียนใหม่ขึ้นเว็บจริงทันที (ไม่ต้องกดอนุมัติ) — เฉพาะเจ้าของ</p>
       {message && <div className="def" style={{ marginTop: 12 }}>{message}</div>}
 
       <section className="sec">
@@ -245,7 +245,7 @@ export default function AdminPage() {
       </section>
 
       <section className="sec">
-        <h2>เขียนเหตุการณ์ใหม่</h2>
+        <h2>เขียนเหตุการณ์ใหม่ (บันทึกแล้วขึ้นเว็บจริงทันที)</h2>
         <p className="small">
           วางข้อมูลในรูปแบบ JSON ตามตัวอย่าง (ticker ทุกตัวต้องเป็นบริษัทที่มีอยู่แล้วในระบบ, lineId ต้องเป็น oil / inflation / dollar,
           ตัวเลขในข้อความต้องใส่ผ่าน <code>{"{{TICKER.field}}"}</code> เท่านั้น) <b>slug ต้องเป็นภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลางเท่านั้น
@@ -258,7 +258,7 @@ export default function AdminPage() {
           style={{ width: "100%", marginTop: 8, fontFamily: "monospace", fontSize: 13, padding: 12, borderRadius: 12, border: "1.5px solid var(--rule)", background: "var(--paper)", color: "var(--ink)" }}
         />
         <button type="button" className="cta" style={{ marginTop: 12, border: "none", cursor: "pointer" }} disabled={busy} onClick={createEvent}>
-          บันทึกเป็น &quot;รอตรวจ&quot;
+          บันทึกและเผยแพร่ขึ้นเว็บทันที
         </button>
       </section>
     </div>

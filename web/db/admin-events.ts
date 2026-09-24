@@ -72,7 +72,7 @@ export interface NewEventPayload {
 
 export class AdminEventError extends Error {}
 
-/** สร้างเหตุการณ์ใหม่ทั้งหมดในทรานแซกชันเดียว สถานะเริ่มต้นเป็น "รอตรวจ" เสมอ (ต้องกดอนุมัติแยก) */
+/** สร้างเหตุการณ์ใหม่ทั้งหมดในทรานแซกชันเดียว เผยแพร่ขึ้นเว็บทันที (เจ้าของเลือกไม่ให้มีขั้นตอนอนุมัติแยกแล้ว) */
 export async function createEvent(payload: NewEventPayload): Promise<{ slug: string }> {
   // slug ต้องเป็นภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลางเท่านั้น (แบบเดียวกับ "oil-supply")
   // ตัวอักษรไทยหรือช่องว่างใน slug ทำให้ URL มีปัญหาการเข้ารหัสจนเปิดหน้าจริงไม่เจอ แม้ข้อมูลจะถูกบันทึกสำเร็จก็ตาม
@@ -102,7 +102,7 @@ export async function createEvent(payload: NewEventPayload): Promise<{ slug: str
   return db.transaction(async (tx) => {
     const [eventRow] = await tx
       .insert(events)
-      .values({ slug: payload.slug, factorId: payload.lineId, title: payload.title, reviewStatus: "pending_review", explanationBy: "team" })
+      .values({ slug: payload.slug, factorId: payload.lineId, title: payload.title, reviewStatus: "approved", explanationBy: "team" })
       .returning({ id: events.id });
     const eventId = eventRow.id;
 
