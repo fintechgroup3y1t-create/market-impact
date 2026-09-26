@@ -103,13 +103,13 @@ export function ImpactMap({ lines, signs }: { lines: Line[]; signs: MapSign[] })
           <path className="trk" pathLength={1} d="M312 44V364" />
           <g className="pop">
             <circle className="term" cx="312" cy="44" r="11" /><circle className="dot" cx="312" cy="44" r="4" />
-            <text className="lab" x="312" y="74" textAnchor="middle"><tspan x="312">ดอลลาร์</tspan><tspan x="312" dy="14">อ่อนค่า</tspan></text>
+            <text className="lab" x="312" y="74" textAnchor="middle"><tspan x="312">ดอลลาร์</tspan><tspan x="312" dy="14">แข็งค่า</tspan></text>
             <circle className="st" cx="312" cy="144" r="8" />
-            <text className="lab" x="312" y="170" textAnchor="middle"><tspan x="312">ราคา</tspan><tspan x="312" dy="14">โภคภัณฑ์</tspan></text>
+            <text className="lab" x="312" y="170" textAnchor="middle"><tspan x="312">ราคาทองคำ</tspan><tspan x="312" dy="14">ถูกกดดัน</tspan></text>
             <circle className="st" cx="312" cy="264" r="8" />
             <text className="lab" x="312" y="292" textAnchor="middle">เหมืองทอง</text>
-            <rect className="stk pos" x="287" y="351" width="50" height="26" rx="13" /><text className="tk" x="312" y="369" textAnchor="middle">NEM</text>
-            <text className="ex pos" x="312" y="396" textAnchor="middle">{EXPOSURE_SHORT.pos}</text>
+            <rect className="stk neg" x="287" y="351" width="50" height="26" rx="13" /><text className="tk" x="312" y="369" textAnchor="middle">NEM</text>
+            <text className="ex neg" x="312" y="396" textAnchor="middle">{EXPOSURE_SHORT.neg}</text>
           </g>
         </g>
       </svg>
