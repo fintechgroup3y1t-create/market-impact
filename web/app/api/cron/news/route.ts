@@ -1,11 +1,9 @@
 // งานตามเวลา ดึงข่าวการเงินจาก Marketaux เก็บไว้ในตาราง documents ให้แอดมินอ่านแล้วตัดสินใจเขียนเหตุการณ์เอง
 // ไม่มี AI จัดประเภทอัตโนมัติ (ตามที่ตกลงกันไว้ในชิ้นที่ 5 — ประหยัดค่าใช้จ่าย)
 
-import { eq, inArray } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb, isDatabaseConfigured } from "@/db/client";
-import { documents, sources } from "@/db/schema";
-import { fetchLatestNews } from "@/lib/news/marketaux";
+import { fetchLatestNews, saveArticlesToDb } from "@/lib/news/marketaux";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 30;
@@ -28,43 +26,10 @@ export async function GET(request: Request) {
   const db = getDb();
   try {
     const articles = await fetchLatestNews();
-
-    // หา/สร้างแถว sources ตามโดเมนต้นฉบับข่าว (ไม่ใช่ "Marketaux" เพราะเป็นแค่ตัวรวมข่าว)
-    const sourceNames = [...new Set(articles.map((a) => a.sourceName))];
-    const existingSources = sourceNames.length ? await db.select().from(sources).where(inArray(sources.name, sourceNames)) : [];
-    const sourceIdByName = new Map(existingSources.map((s) => [s.name, s.id]));
-    for (const name of sourceNames) {
-      if (sourceIdByName.has(name)) continue;
-      const [row] = await db
-        .insert(sources)
-        .values({ name, kind: "ข่าว", licenseNote: "ดึงผ่าน Marketaux (แผนฟรี) — ไม่ copy เนื้อหา แสดงแค่หัวข้อ+ลิงก์กลับต้นฉบับ" })
-        .returning({ id: sources.id });
-      sourceIdByName.set(name, row.id);
-    }
-
-    // เลี่ยงใส่ข่าวซ้ำ เช็ก URL ที่มีอยู่แล้วก่อน
-    const urls = articles.map((a) => a.url);
-    const existingDocs = urls.length ? await db.select({ url: documents.url }).from(documents).where(inArray(documents.url, urls)) : [];
-    const existingUrls = new Set(existingDocs.map((d) => d.url));
-
-    let inserted = 0;
-    for (const a of articles) {
-      if (existingUrls.has(a.url)) continue;
-      const sourceId = sourceIdByName.get(a.sourceName);
-      if (!sourceId) continue;
-      await db.insert(documents).values({
-        sourceId,
-        title: a.title,
-        url: a.url,
-        docType: "news",
-        publishedAt: new Date(a.publishedAt),
-        retrievedAt: new Date(),
-      });
-      inserted++;
-    }
+    const { insertedUrls } = await saveArticlesToDb(db, articles);
 
     return NextResponse.json(
-      { ok: true, fetched: articles.length, inserted, skipped: articles.length - inserted },
+      { ok: true, fetched: articles.length, inserted: insertedUrls.size, skipped: articles.length - insertedUrls.size },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch (err) {

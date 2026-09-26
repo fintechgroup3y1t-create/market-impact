@@ -4,7 +4,7 @@
 import { NextResponse } from "next/server";
 import { isDatabaseConfigured } from "@/db/client";
 import { createEvent, AdminEventError, type NewEventPayload } from "@/db/admin-events";
-import { allEventsAnyStatus } from "@/lib/data";
+import { allEventsAnyStatus, getEvidence } from "@/lib/data";
 import { checkAdminSecret } from "@/lib/admin-auth";
 
 export const dynamic = "force-dynamic";
@@ -13,14 +13,21 @@ export async function GET(request: Request) {
   const denied = checkAdminSecret(request);
   if (denied) return denied;
   const events = await allEventsAnyStatus();
-  const summary = events.map((e) => ({
-    slug: e.slug,
-    title: e.title,
-    lineId: e.lineId,
-    reviewStatus: e.reviewStatus,
-    updatedAt: e.updatedAt,
-    tickers: e.quick.tickers,
-  }));
+  const summary = await Promise.all(
+    events.map(async (e) => ({
+      slug: e.slug,
+      title: e.title,
+      lineId: e.lineId,
+      reviewStatus: e.reviewStatus,
+      updatedAt: e.updatedAt,
+      tickers: e.quick.tickers,
+      // สำหรับเหตุการณ์ร่างที่ระบบตรวจจับอัตโนมัติสร้างไว้ (สถานะ "รอคำอธิบาย") — ข่าว/หลักฐานที่ระบบหาให้แล้ว
+      evidence:
+        e.reviewStatus === "pending_explanation"
+          ? (await getEvidence(e.evidenceIds)).map((ev) => ({ sourceName: ev.sourceName, url: ev.url, kind: ev.kind }))
+          : [],
+    })),
+  );
   return NextResponse.json({ events: summary }, { headers: { "Cache-Control": "no-store" } });
 }
 

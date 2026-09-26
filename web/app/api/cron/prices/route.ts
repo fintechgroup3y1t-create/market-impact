@@ -6,6 +6,7 @@ import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
 import { getDb, isDatabaseConfigured } from "@/db/client";
 import { entities, marketMetrics, prices } from "@/db/schema";
+import { detectAndDraftEvents } from "@/lib/detect/auto-events";
 import { getQuote, MARKET_BENCHMARK_KEY, PROXY_TICKERS, pctReturn, SECTOR_GROUPS, sleep } from "@/lib/prices/tiingo";
 
 export const dynamic = "force-dynamic";
@@ -73,10 +74,12 @@ export async function GET(request: Request) {
   }
 
   const marketReturn = returns[MARKET_BENCHMARK_KEY];
+  const abnormalReturns: Record<string, number> = {};
   if (marketReturn !== undefined) {
     for (const e of covered) {
       if (returns[e.ticker] === undefined) continue;
-      await upsertMetric(e.ticker, "abn_ret_1d", returns[e.ticker] - marketReturn, "pct", asOfDate);
+      abnormalReturns[e.ticker] = returns[e.ticker] - marketReturn;
+      await upsertMetric(e.ticker, "abn_ret_1d", abnormalReturns[e.ticker], "pct", asOfDate);
     }
   }
 
@@ -88,12 +91,22 @@ export async function GET(request: Request) {
     await upsertMetric(group.key, "ret_1d", avg, "pct", asOfDate);
   }
 
+  // ระบบตรวจจับการเคลื่อนไหวผิดปกติ + สร้างเหตุการณ์ร่างอัตโนมัติ (ไม่ใช้ AI) — ดู lib/detect/auto-events.ts
+  // ห่อด้วย try/catch เผื่อ error ตรงนี้ไม่ทำให้การดึงราคา (งานหลักของ cron นี้) ล้มเหลวไปด้วย
+  let detect: Awaited<ReturnType<typeof detectAndDraftEvents>> | null = null;
+  try {
+    detect = await detectAndDraftEvents(returns, abnormalReturns, asOfDate);
+  } catch (err) {
+    errors.push(`detectAndDraftEvents: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
   return NextResponse.json(
     {
       ok: errors.length === 0,
       asOfDate,
       fetched: Object.keys(returns).length,
       errors,
+      autoDetect: detect,
     },
     { headers: { "Cache-Control": "no-store" } },
   );
