@@ -14,6 +14,7 @@ interface EventSummary {
   reviewStatus: "pending_explanation" | "pending_review" | "approved";
   updatedAt: string;
   tickers: string[];
+  evidence: { sourceName: string; url: string | null; kind: string }[];
 }
 
 interface NewsItem {
@@ -194,6 +195,22 @@ export default function AdminPage() {
                 <span className="small">
                   {e.slug} · สาย {e.lineId} · หุ้น {e.tickers.join(", ") || "-"}
                 </span>
+                {e.reviewStatus === "pending_explanation" && e.evidence.length > 0 && (
+                  <div className="def" style={{ padding: 10 }}>
+                    <b className="small">ข่าวที่ระบบดึงมาให้อัตโนมัติ (ยังไม่ผ่านการตรวจสอบ):</b>
+                    <ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>
+                      {e.evidence.map((ev) =>
+                        ev.url ? (
+                          <li key={ev.url} className="small">
+                            <a href={ev.url} target="_blank" rel="noreferrer">{ev.sourceName}</a>
+                          </li>
+                        ) : (
+                          <li key={ev.sourceName} className="small">{ev.sourceName} ({ev.kind})</li>
+                        ),
+                      )}
+                    </ul>
+                  </div>
+                )}
                 <div style={{ display: "flex", gap: 8 }}>
                   {e.reviewStatus !== "approved" && (
                     <button type="button" className="chip" disabled={busy} onClick={() => setStatus(e.slug, "approved")}>
