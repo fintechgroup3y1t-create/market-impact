@@ -88,9 +88,9 @@ export function ImpactMap({ lines, signs }: { lines: Line[]; signs: MapSign[] })
           <path className="trk" pathLength={1} d="M240 44V364" />
           <g className="pop">
             <circle className="term" cx="240" cy="44" r="11" /><circle className="dot" cx="240" cy="44" r="4" />
-            <text className="lab" x="240" y="74" textAnchor="middle"><tspan x="240">รอตัวเลข</tspan><tspan x="240" dy="14">เงินเฟ้อ</tspan></text>
+            <text className="lab" x="240" y="74" textAnchor="middle"><tspan x="240">เฟดขึ้น</tspan><tspan x="240" dy="14">ดอกเบี้ย</tspan></text>
             <circle className="st" cx="240" cy="144" r="8" />
-            <text className="lab" x="240" y="170" textAnchor="middle"><tspan x="240">ทิศทาง</tspan><tspan x="240" dy="14">ดอกเบี้ย</tspan></text>
+            <text className="lab" x="240" y="170" textAnchor="middle"><tspan x="240">อัตราคิดลด</tspan><tspan x="240" dy="14">สูงขึ้น</tspan></text>
             <circle className="st" cx="240" cy="264" r="8" />
             <text className="lab" x="240" y="292" textAnchor="middle">หุ้นเทค</text>
             <rect className="stk mix" x="213" y="351" width="54" height="26" rx="13" /><text className="tk" x="240" y="369" textAnchor="middle">NVDA</text>
