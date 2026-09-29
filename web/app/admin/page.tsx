@@ -4,6 +4,7 @@
 // ป้องกันด้วยรหัสผ่านเดียวกับที่ใช้ตั้งค่าฐานข้อมูล (ADMIN_SECRET) เก็บไว้ใน sessionStorage ของเบราว์เซอร์เท่านั้น
 
 import { useEffect, useState } from "react";
+import AdminEventForm, { type FormEventPayload } from "@/components/AdminEventForm";
 
 const STORAGE_KEY = "mi_admin_secret";
 
@@ -52,6 +53,7 @@ export default function AdminPage() {
   const [jsonInput, setJsonInput] = useState(SAMPLE_TEMPLATE);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [writeMode, setWriteMode] = useState<"form" | "json">("form");
 
   useEffect(() => {
     const saved = typeof window !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null;
@@ -117,15 +119,14 @@ export default function AdminPage() {
     }
   }
 
-  async function createEvent() {
+  async function submitPayload(payload: unknown) {
     setBusy(true);
     setMessage(null);
     try {
-      const parsed = JSON.parse(jsonInput);
       const res = await fetch("/api/admin/events", {
         method: "POST",
         headers: { ...headers(), "content-type": "application/json" },
-        body: JSON.stringify(parsed),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok || !data.ok) throw new Error(data.error ?? "ไม่ทราบสาเหตุ");
@@ -136,6 +137,19 @@ export default function AdminPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function createEventFromJson() {
+    try {
+      const parsed = JSON.parse(jsonInput);
+      await submitPayload(parsed);
+    } catch (err) {
+      setMessage(`JSON ไม่ถูกต้อง: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  async function createEventFromForm(payload: FormEventPayload) {
+    await submitPayload(payload);
   }
 
   async function fetchNewsNow() {
@@ -262,21 +276,47 @@ export default function AdminPage() {
       </section>
 
       <section className="sec">
-        <h2>เขียนเหตุการณ์ใหม่ (บันทึกแล้วขึ้นเว็บจริงทันที)</h2>
-        <p className="small">
-          วางข้อมูลในรูปแบบ JSON ตามตัวอย่าง (ticker ทุกตัวต้องเป็นบริษัทที่มีอยู่แล้วในระบบ, lineId ต้องเป็น oil / inflation / dollar,
-          ตัวเลขในข้อความต้องใส่ผ่าน <code>{"{{TICKER.field}}"}</code> เท่านั้น) <b>slug ต้องเป็นภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลางเท่านั้น
-          เช่น &quot;oil-supply-2&quot; ห้ามมีภาษาไทยหรือช่องว่างเด็ดขาด ไม่งั้นเปิดหน้าจริงจะหาไม่เจอ</b>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 8 }}>
+          <h2>เขียนเหตุการณ์ใหม่ (บันทึกแล้วขึ้นเว็บจริงทันที)</h2>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              type="button"
+              className="chip"
+              style={writeMode === "form" ? { borderColor: "var(--ink)" } : undefined}
+              onClick={() => setWriteMode("form")}
+            >
+              แบบฟอร์ม (ง่าย)
+            </button>
+            <button
+              type="button"
+              className="chip"
+              style={writeMode === "json" ? { borderColor: "var(--ink)" } : undefined}
+              onClick={() => setWriteMode("json")}
+            >
+              JSON ดิบ (ขั้นสูง)
+            </button>
+          </div>
+        </div>
+        <p className="small" style={{ marginTop: 8 }}>
+          ticker ทุกตัวต้องเป็นบริษัทที่มีอยู่แล้วในระบบ ตัวเลขในข้อความต้องใส่ผ่าน <code>{"{{TICKER.field}}"}</code> เท่านั้น{" "}
+          <b>slug ต้องเป็นภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลางเท่านั้น เช่น &quot;oil-supply-2&quot; ห้ามมีภาษาไทยหรือช่องว่างเด็ดขาด ไม่งั้นเปิดหน้าจริงจะหาไม่เจอ</b>
         </p>
-        <textarea
-          value={jsonInput}
-          onChange={(e) => setJsonInput(e.target.value)}
-          rows={16}
-          style={{ width: "100%", marginTop: 8, fontFamily: "monospace", fontSize: 13, padding: 12, borderRadius: 12, border: "1.5px solid var(--rule)", background: "var(--paper)", color: "var(--ink)" }}
-        />
-        <button type="button" className="cta" style={{ marginTop: 12, border: "none", cursor: "pointer" }} disabled={busy} onClick={createEvent}>
-          บันทึกและเผยแพร่ขึ้นเว็บทันที
-        </button>
+
+        {writeMode === "form" ? (
+          <AdminEventForm busy={busy} onSubmit={createEventFromForm} />
+        ) : (
+          <>
+            <textarea
+              value={jsonInput}
+              onChange={(e) => setJsonInput(e.target.value)}
+              rows={16}
+              style={{ width: "100%", marginTop: 8, fontFamily: "monospace", fontSize: 13, padding: 12, borderRadius: 12, border: "1.5px solid var(--rule)", background: "var(--paper)", color: "var(--ink)" }}
+            />
+            <button type="button" className="cta" style={{ marginTop: 12, border: "none", cursor: "pointer" }} disabled={busy} onClick={createEventFromJson}>
+              บันทึกและเผยแพร่ขึ้นเว็บทันที
+            </button>
+          </>
+        )}
       </section>
     </div>
   );
