@@ -19,17 +19,27 @@ export interface NewsArticle {
 /** หุ้นสำคัญบางส่วนที่ใช้กรองข่าวให้ตรงกับสิ่งที่เว็บครอบคลุม (ค่าเริ่มต้นเวลาไม่ได้ระบุ symbols เอง) */
 const FOCUS_TICKERS = ["XOM", "CVX", "DAL", "UAL", "NVDA", "AAPL", "JPM", "AMZN", "MSFT"];
 
-/** symbols: ระบุ ticker เฉพาะที่อยากได้ข่าว (เช่น ตัวที่ระบบตรวจพบว่าราคาขยับผิดปกติวันนี้) ไม่ระบุ = ใช้ FOCUS_TICKERS เดิม */
-export async function fetchLatestNews(limit = 20, symbols: string[] = FOCUS_TICKERS): Promise<NewsArticle[]> {
+/**
+ * symbols: ระบุ ticker เฉพาะที่อยากได้ข่าว (เช่น ตัวที่ระบบตรวจพบว่าราคาขยับผิดปกติวันนี้)
+ *   ไม่ระบุ = ใช้ FOCUS_TICKERS เดิม, ส่ง null = ไม่กรองตาม ticker เลย (ใช้คู่กับ search)
+ * search: ค้นด้วยคำสำคัญทั่วไป (เช่น "flood", "Thailand flooding") ไม่ผูกกับ ticker ไหน — ใช้สำหรับข่าวที่ไม่รู้ล่วงหน้าว่าเกี่ยวหุ้นตัวไหน
+ */
+export async function fetchLatestNews(
+  limit = 20,
+  symbols: string[] | null = FOCUS_TICKERS,
+  search?: string,
+): Promise<NewsArticle[]> {
   const key = process.env.MARKETAUX_API_KEY;
   if (!key) throw new MarketauxError("ไม่พบ MARKETAUX_API_KEY");
+  if (!symbols?.length && !search) throw new MarketauxError("ต้องระบุ symbols หรือ search อย่างน้อยหนึ่งอย่าง");
   const params = new URLSearchParams({
     api_token: key,
-    symbols: symbols.join(","),
     language: "en",
     limit: String(limit),
     sort: "published_desc",
   });
+  if (symbols?.length) params.set("symbols", symbols.join(","));
+  if (search) params.set("search", search);
   const res = await fetch(`https://api.marketaux.com/v1/news/all?${params}`, { cache: "no-store" });
   if (!res.ok) throw new MarketauxError(`Marketaux ตอบกลับผิดพลาด (${res.status})`);
   const data = (await res.json()) as {
