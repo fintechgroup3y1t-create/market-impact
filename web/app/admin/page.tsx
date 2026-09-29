@@ -54,6 +54,8 @@ export default function AdminPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [writeMode, setWriteMode] = useState<"form" | "json">("form");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<NewsItem[] | null>(null);
 
   useEffect(() => {
     const saved = typeof window !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null;
@@ -168,6 +170,24 @@ export default function AdminPage() {
     }
   }
 
+  async function searchNews() {
+    const q = searchQuery.trim();
+    if (!q) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/news/search?q=${encodeURIComponent(q)}`, { headers: headers() });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "ไม่ทราบสาเหตุ");
+      setSearchResults(data.results ?? []);
+      if ((data.results ?? []).length === 0) setMessage(`ไม่พบข่าวที่ตรงกับคำค้น "${q}"`);
+    } catch (err) {
+      setMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   if (!unlocked) {
     return (
       <div style={{ maxWidth: 420, margin: "60px auto", padding: 20 }}>
@@ -271,6 +291,43 @@ export default function AdminPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+      </section>
+
+      <section className="sec">
+        <h2>ค้นข่าวด้วยคำค้น (ไม่ผูกกับหุ้นตัวไหน)</h2>
+        <p className="small">
+          ใช้ตอนอยากหาข่าวเรื่องที่ยังไม่รู้ว่ากระทบหุ้นตัวไหนโดยตรง เช่น ภัยธรรมชาติ, เหตุการณ์ภูมิรัฐศาสตร์ — พิมพ์เป็นภาษาอังกฤษจะเจอผลลัพธ์มากกว่า
+          (เช่น &quot;Thailand flood&quot; แทน &quot;น้ำท่วม&quot;)
+        </p>
+        <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+          <input
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && searchNews()}
+            placeholder="เช่น Thailand flood, semiconductor supply"
+            style={{ flex: 1, padding: "8px 10px", borderRadius: 8, border: "1.5px solid var(--rule)", background: "var(--paper)", color: "var(--ink)" }}
+          />
+          <button type="button" className="chip" disabled={busy} onClick={searchNews}>
+            ค้นข่าว
+          </button>
+        </div>
+        {searchResults && (
+          <div className="list" style={{ marginTop: 12 }}>
+            {searchResults.length === 0 ? (
+              <p className="muted">ไม่พบข่าว</p>
+            ) : (
+              searchResults.map((n) => (
+                <div key={n.url} className="src-row">
+                  <div>
+                    <a href={n.url} target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>{n.title}</a>
+                    <br />
+                    <span className="small">{n.sourceName}</span>
+                  </div>
+                </div>
+              ))
+            )}
           </div>
         )}
       </section>
