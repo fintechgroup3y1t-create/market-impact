@@ -140,13 +140,40 @@ function RowCard({ children, onRemove }: { children: React.ReactNode; onRemove: 
   );
 }
 
+const SLUG_PATTERN = /^[a-z0-9-]+$/;
+
+/** ตรวจก่อนส่งจริง กันพิมพ์ผิดพลาดที่เจอทีหลังตอนเผยแพร่ไปแล้ว (เว็บนี้บันทึก = ขึ้นเว็บจริงทันที ไม่มีขั้นตอนอนุมัติแยก) */
+function validate(payload: FormEventPayload, knownTickers: Set<string>): string[] {
+  const errors: string[] = [];
+  if (!payload.slug) errors.push("ยังไม่ได้ใส่ slug");
+  else if (!SLUG_PATTERN.test(payload.slug)) errors.push("slug ต้องเป็นภาษาอังกฤษตัวเล็ก ตัวเลข และขีดกลางเท่านั้น (ห้ามมีภาษาไทยหรือช่องว่าง)");
+  if (!payload.title) errors.push("ยังไม่ได้ใส่หัวข้อเหตุการณ์");
+  if (!payload.quick.what) errors.push("ยังไม่ได้ใส่ \"เกิดอะไรขึ้น\"");
+  if (!payload.quick.who) errors.push("ยังไม่ได้ใส่ \"ใครได้รับผล\"");
+  if (payload.impacts.length === 0) errors.push("ต้องมีหุ้นที่ได้รับผล (impacts) อย่างน้อย 1 ตัว");
+  if (knownTickers.size > 0) {
+    const unknown = [...new Set([...payload.quick.tickers, ...payload.impacts.map((i) => i.ticker)])].filter(
+      (t) => !knownTickers.has(t),
+    );
+    if (unknown.length > 0) errors.push(`ไม่รู้จัก ticker นี้ในระบบ (พิมพ์ผิดหรือยังไม่ครอบคลุม): ${unknown.join(", ")}`);
+  }
+  const factClaimsWithoutEvidence = payload.claims.filter((c) => c.kind === "fact" && c.evidenceKeys.length === 0);
+  if (factClaimsWithoutEvidence.length > 0) errors.push("มีข้ออ้างประเภท \"ข้อเท็จจริง\" ที่ยังไม่ได้ผูกหลักฐาน (ตามกฎของเว็บ ทุก Fact ต้องมีหลักฐานอ้างอิง)");
+  return errors;
+}
+
 export default function AdminEventForm({
   busy,
   onSubmit,
+  companies,
 }: {
   busy: boolean;
   onSubmit: (payload: FormEventPayload) => Promise<void>;
+  /** รายชื่อ ticker ที่ครอบคลุมจริง ใช้ทำ autocomplete + ตรวจว่าพิมพ์ถูกไหม (ว่างได้ถ้าโหลดไม่สำเร็จ จะข้ามการตรวจส่วนนี้) */
+  companies: { ticker: string; name: string }[];
 }) {
+  const [formErrors, setFormErrors] = useState<string[]>([]);
+  const knownTickers = new Set(companies.map((c) => c.ticker));
   const [slug, setSlug] = useState("");
   const [lineId, setLineId] = useState("oil");
   const [title, setTitle] = useState("");
@@ -217,7 +244,7 @@ export default function AdminEventForm({
 
   return (
     <div>
-      <Field label="slug (ภาษาอังกฤษ/ตัวเลข/ขีดกลางเท่านั้น เช่น oil-supply-2)">
+      <Field label="slug (ภาษาอังกฤษ/ตัวเลข/ขีดกลางเท่านั้น เช่น oil-supply-2) *">
         <input style={inputStyle} value={slug} onChange={(e) => setSlug(e.target.value)} placeholder="oil-supply-2" />
       </Field>
 
@@ -231,20 +258,20 @@ export default function AdminEventForm({
         </select>
       </Field>
 
-      <Field label="หัวข้อเหตุการณ์">
+      <Field label="หัวข้อเหตุการณ์ *">
         <input style={inputStyle} value={title} onChange={(e) => setTitle(e.target.value)} placeholder="หัวข้อสั้น ๆ บอกว่าเกิดอะไรขึ้น" />
       </Field>
 
-      <Field label="เกิดอะไรขึ้น (สั้น ๆ)">
+      <Field label="เกิดอะไรขึ้น (สั้น ๆ) *">
         <textarea style={{ ...inputStyle, resize: "vertical" }} rows={2} value={quickWhat} onChange={(e) => setQuickWhat(e.target.value)} />
       </Field>
 
-      <Field label="ใครได้รับผล">
+      <Field label="ใครได้รับผล *">
         <textarea style={{ ...inputStyle, resize: "vertical" }} rows={2} value={quickWho} onChange={(e) => setQuickWho(e.target.value)} />
       </Field>
 
       <Field label="หุ้นที่เกี่ยวข้อง (ticker คั่นด้วยจุลภาค เช่น XOM, DAL)">
-        <input style={inputStyle} value={tickersText} onChange={(e) => setTickersText(e.target.value)} placeholder="XOM, DAL" />
+        <input style={inputStyle} value={tickersText} onChange={(e) => setTickersText(e.target.value)} placeholder="XOM, DAL" list="known-tickers" />
       </Field>
 
       <Field label="สิ่งที่ควรจับตาต่อ (deep.watch, ไม่บังคับ)">
@@ -340,12 +367,12 @@ export default function AdminEventForm({
 
       {/* impacts */}
       <div style={{ marginTop: 20, paddingTop: 12, borderTop: "1.5px solid var(--rule)" }}>
-        <b>หุ้นที่ได้รับผล (impacts)</b>
+        <b>หุ้นที่ได้รับผล (impacts) * ต้องมีอย่างน้อย 1 ตัว</b>
         <p className="small" style={{ marginTop: 4 }}>ticker ต้องเป็นบริษัทที่มีอยู่แล้วในระบบเท่านั้น</p>
         {impactRows.map((row) => (
           <RowCard key={row._id} onRemove={() => setImpactRows(impactRows.filter((r) => r._id !== row._id))}>
             <Field label="Ticker">
-              <input style={inputStyle} value={row.ticker} onChange={(e) => patchRow(impactRows, setImpactRows, row._id, { ticker: e.target.value })} placeholder="XOM" />
+              <input style={inputStyle} value={row.ticker} onChange={(e) => patchRow(impactRows, setImpactRows, row._id, { ticker: e.target.value })} placeholder="XOM" list="known-tickers" />
             </Field>
             <Field label="Exposure">
               <select style={inputStyle} value={row.exposure} onChange={(e) => patchRow(impactRows, setImpactRows, row._id, { exposure: e.target.value as Exposure })}>
@@ -405,17 +432,43 @@ export default function AdminEventForm({
         </button>
       </div>
 
+      <datalist id="known-tickers">
+        {companies.map((c) => (
+          <option key={c.ticker} value={c.ticker}>
+            {c.name}
+          </option>
+        ))}
+      </datalist>
+
       <p className="small" style={{ marginTop: 16, opacity: 0.7 }}>
         หมายเหตุ: ฟอร์มนี้ยังไม่รองรับการวาด &quot;แผนที่ผลกระทบ&quot; แบบเต็ม (chains) — ถ้าต้องการหน้า &quot;ทำไมถึงเป็นหุ้นตัวนี้&quot;
         แบบหลักฐาน 4 ชั้นเต็มรูปแบบ ให้ขอ Claude Code ช่วยเขียนแทน หรือสลับไปโหมด JSON ดิบ
       </p>
+
+      {formErrors.length > 0 && (
+        <div className="def" style={{ padding: 10, marginTop: 12, borderColor: "var(--neg)" }}>
+          <b style={{ color: "var(--neg)" }}>แก้ก่อนบันทึก:</b>
+          <ul style={{ margin: "6px 0 0", paddingLeft: 20 }}>
+            {formErrors.map((e) => (
+              <li key={e} className="small">
+                {e}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <button
         type="button"
         className="cta"
         style={{ marginTop: 16, border: "none", cursor: "pointer" }}
         disabled={busy}
-        onClick={() => onSubmit(buildPayload())}
+        onClick={() => {
+          const payload = buildPayload();
+          const errors = validate(payload, knownTickers);
+          setFormErrors(errors);
+          if (errors.length === 0) onSubmit(payload);
+        }}
       >
         บันทึกและเผยแพร่ขึ้นเว็บทันที
       </button>

@@ -57,6 +57,7 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<NewsItem[] | null>(null);
   const [backtestResult, setBacktestResult] = useState<string | null>(null);
+  const [companies, setCompanies] = useState<{ ticker: string; name: string }[]>([]);
 
   useEffect(() => {
     const saved = typeof window !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null;
@@ -78,9 +79,10 @@ export default function AdminPage() {
   async function refresh() {
     setMessage(null);
     try {
-      const [eventsRes, newsRes] = await Promise.all([
+      const [eventsRes, newsRes, companiesRes] = await Promise.all([
         fetch("/api/admin/events", { headers: headers() }),
         fetch("/api/admin/news", { headers: headers() }),
+        fetch("/api/admin/companies", { headers: headers() }),
       ]);
       if (eventsRes.status === 401 || newsRes.status === 401) {
         setUnlocked(false);
@@ -92,6 +94,10 @@ export default function AdminPage() {
       const newsData = await newsRes.json();
       setEvents(eventsData.events ?? []);
       setNews(newsData.news ?? []);
+      if (companiesRes.ok) {
+        const companiesData = await companiesRes.json();
+        setCompanies(companiesData.companies ?? []);
+      }
     } catch (err) {
       setMessage(`โหลดข้อมูลไม่สำเร็จ: ${err instanceof Error ? err.message : String(err)}`);
     }
@@ -428,7 +434,7 @@ export default function AdminPage() {
         </p>
 
         {writeMode === "form" ? (
-          <AdminEventForm busy={busy} onSubmit={createEventFromForm} />
+          <AdminEventForm busy={busy} onSubmit={createEventFromForm} companies={companies} />
         ) : (
           <>
             <textarea
