@@ -13,6 +13,7 @@
 // และ "การโจมตีโครงสร้างพื้นฐานน้ำมันอ่าวเปอร์เซีย" (อ้างสาเหตุเฉพาะที่ราคาอย่างเดียวพิสูจน์ไม่ได้ว่าเกิดจากอะไร)
 
 import { NextResponse } from "next/server";
+import { getManualSecret } from "@/lib/admin-auth";
 import { isDatabaseConfigured } from "@/db/client";
 import { chunkedEventStudy, type BacktestResult } from "@/lib/prices/backtest";
 import { getDailyHistory, sleep, type DailyClose } from "@/lib/prices/tiingo";
@@ -41,7 +42,7 @@ function summarize(result: BacktestResult | null) {
 }
 
 export async function GET(request: Request) {
-  const manualSecret = request.headers.get("x-admin-secret") ?? new URL(request.url).searchParams.get("secret");
+  const manualSecret = getManualSecret(request);
   const isManual = Boolean(process.env.ADMIN_SECRET) && manualSecret === process.env.ADMIN_SECRET;
   if (!isManual) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

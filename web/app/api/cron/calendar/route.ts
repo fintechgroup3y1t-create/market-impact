@@ -3,6 +3,7 @@
 // ทำงานได้เฉพาะเมื่อตั้งค่า DATABASE_URL, FRED_API_KEY และ EIA_API_KEY แล้วเท่านั้น
 
 import { NextResponse } from "next/server";
+import { getManualSecret } from "@/lib/admin-auth";
 import { getDb, isDatabaseConfigured } from "@/db/client";
 import { marketMetrics } from "@/db/schema";
 import { getCrudeStocks } from "@/lib/econ/eia";
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
   // อนุญาต 2 ทาง เหมือน /api/cron/prices: header จาก Vercel Cron จริง หรือ ?secret=ADMIN_SECRET เปิดเองผ่านเบราว์เซอร์
   const auth = request.headers.get("authorization");
   const isCron = process.env.CRON_SECRET && auth === `Bearer ${process.env.CRON_SECRET}`;
-  const manualSecret = request.headers.get("x-admin-secret") ?? new URL(request.url).searchParams.get("secret");
+  const manualSecret = getManualSecret(request);
   const isManual = process.env.ADMIN_SECRET && manualSecret === process.env.ADMIN_SECRET;
   if (!isCron && !isManual) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

@@ -9,6 +9,7 @@
 import { NextResponse } from "next/server";
 import { getDb, isDatabaseConfigured } from "@/db/client";
 import { marketMetrics } from "@/db/schema";
+import { getManualSecret } from "@/lib/admin-auth";
 import { computeBeta } from "@/lib/prices/beta";
 import { BETA_PROXIES, BETA_TARGETS, type BetaFactor } from "@/lib/prices/beta-targets";
 import { getDailyHistory, sleep, type DailyClose } from "@/lib/prices/tiingo";
@@ -35,7 +36,7 @@ function startDateTwoYearsAgo(): string {
 
 export async function GET(request: Request) {
   // เฉพาะเปิดเองผ่านหน้าแอดมินเท่านั้น (ไม่ต้องรองรับ Vercel Cron header เหมือนงานรายวันอื่น)
-  const manualSecret = request.headers.get("x-admin-secret") ?? new URL(request.url).searchParams.get("secret");
+  const manualSecret = getManualSecret(request);
   const isManual = Boolean(process.env.ADMIN_SECRET) && manualSecret === process.env.ADMIN_SECRET;
   if (!isManual) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
