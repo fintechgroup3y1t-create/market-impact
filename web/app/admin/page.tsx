@@ -53,6 +53,8 @@ export default function AdminPage() {
   const [jsonInput, setJsonInput] = useState(SAMPLE_TEMPLATE);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  // แยกไว้ต่างหากจาก busy เพราะปุ่มอื่นก็ใช้ busy ตัวเดียวกัน (กันกดซ้อน) แต่จะโชว์ข้อความ "กำลังทำงาน" เฉพาะปุ่มที่กดจริงเท่านั้น
+  const [runningAction, setRunningAction] = useState<string | null>(null);
   const [writeMode, setWriteMode] = useState<"form" | "json">("form");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<NewsItem[] | null>(null);
@@ -179,6 +181,7 @@ export default function AdminPage() {
 
   async function computeBetaNow() {
     setBusy(true);
+    setRunningAction("beta");
     setMessage(null);
     try {
       const res = await fetch(`/api/admin/compute-sensitivity`, { headers: headers() });
@@ -190,24 +193,27 @@ export default function AdminPage() {
       setMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setBusy(false);
+      setRunningAction(null);
     }
   }
 
   async function computeBacktestNow() {
     setBusy(true);
+    setRunningAction("backtest");
     setMessage(null);
     setBacktestResult(null);
     try {
       const res = await fetch(`/api/admin/compute-backtest`, { headers: headers() });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "ไม่ทราบสาเหตุ");
-      const errNote = data.errors?.length ? ` (มีบางตัวดึงราคาไม่สำเร็จ ${data.errors.length} รายการ)` : "";
+      const errNote = data.errors?.length ? ` (มีบางตัวดึงราคาไม่สำเร็จ ${data.errors.length} รายการ ดูรายละเอียด error ด้านล่าง)` : "";
       setMessage(`คำนวณ backtest สำเร็จ${errNote} — คัดลอกตัวเลขด้านล่างไปแทนที่ [n]/[x.x%]/[ปี] ในเนื้อหาเอง`);
-      setBacktestResult(JSON.stringify(data.results, null, 2));
+      setBacktestResult(JSON.stringify({ results: data.results, errors: data.errors }, null, 2));
     } catch (err) {
       setMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setBusy(false);
+      setRunningAction(null);
     }
   }
 
@@ -313,7 +319,7 @@ export default function AdminPage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2>Beta ต่อปัจจัย (น้ำมัน / ดอกเบี้ย / ดอลลาร์)</h2>
           <button type="button" className="chip" disabled={busy} onClick={computeBetaNow}>
-            คำนวณ Beta ใหม่
+            {runningAction === "beta" ? "กำลังคำนวณ... (รอได้เลย ใช้เวลาถึง 1 นาที)" : "คำนวณ Beta ใหม่"}
           </button>
         </div>
         <p className="small">
@@ -327,7 +333,7 @@ export default function AdminPage() {
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <h2>สถิติในอดีต (backtest) สำหรับข้อความ &quot;[n] ครั้ง ตั้งแต่ปี [ปี]&quot;</h2>
           <button type="button" className="chip" disabled={busy} onClick={computeBacktestNow}>
-            คำนวณ backtest
+            {runningAction === "backtest" ? "กำลังคำนวณ... (รอได้เลย ใช้เวลาถึง 1 นาที)" : "คำนวณ backtest"}
           </button>
         </div>
         <p className="small">
