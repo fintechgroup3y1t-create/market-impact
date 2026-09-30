@@ -47,6 +47,7 @@ p{margin:0}
 .chip{min-height:40px;display:flex;align-items:center;gap:8px;padding:0 14px;border-radius:999px;border:1.5px solid var(--rule);background:transparent;font-size:14px;font-weight:600;cursor:pointer}
 .chip i{width:14px;height:6px;border-radius:3px;background:var(--lc)}
 .chip[aria-pressed="true"]{border-color:var(--lc);background:color-mix(in srgb,var(--lc) 12%,transparent)}
+.chip:disabled,.cta:disabled{opacity:.5;cursor:not-allowed}
 
 .map{width:100%;height:auto;display:block;margin-top:10px}
 .map .guide{stroke:var(--rule);stroke-width:1;stroke-dasharray:2 5}
