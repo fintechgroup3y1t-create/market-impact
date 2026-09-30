@@ -201,9 +201,9 @@ export default function AdminPage() {
       const res = await fetch(`/api/admin/compute-backtest`, { headers: headers() });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "ไม่ทราบสาเหตุ");
-      const errNote = data.errors?.length ? ` (มีบางตัวดึงราคาไม่สำเร็จ ${data.errors.length} รายการ)` : "";
+      const errNote = data.errors?.length ? ` (มีบางตัวดึงราคาไม่สำเร็จ ${data.errors.length} รายการ ดูรายละเอียด error ด้านล่าง)` : "";
       setMessage(`คำนวณ backtest สำเร็จ${errNote} — คัดลอกตัวเลขด้านล่างไปแทนที่ [n]/[x.x%]/[ปี] ในเนื้อหาเอง`);
-      setBacktestResult(JSON.stringify(data.results, null, 2));
+      setBacktestResult(JSON.stringify({ results: data.results, errors: data.errors }, null, 2));
     } catch (err) {
       setMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
