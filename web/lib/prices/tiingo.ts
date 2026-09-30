@@ -52,6 +52,28 @@ export async function getQuote(ticker: string): Promise<{ c: number; pc: number 
   return { c: current, pc: q.prevClose };
 }
 
+export interface DailyClose {
+  date: string; // YYYY-MM-DD
+  close: number;
+}
+
+/** ราคาปิดรายวันย้อนหลัง (คนละ endpoint กับราคาล่าสุด) ใช้คำนวณ Beta จากผลตอบแทนรายวันจริง
+ * แผนฟรีของ Tiingo รองรับข้อมูลย้อนหลังของหุ้น/ETF หลายปี (ต่างจาก endpoint ราคาล่าสุดที่ใช้ข้างบน) */
+export async function getDailyHistory(ticker: string, startDate: string): Promise<DailyClose[]> {
+  const key = process.env.TIINGO_API_KEY;
+  if (!key) throw new TiingoError("ไม่พบ TIINGO_API_KEY");
+  const res = await fetch(
+    `https://api.tiingo.com/tiingo/daily/${encodeURIComponent(ticker)}/prices?startDate=${startDate}&token=${key}`,
+    { cache: "no-store", headers: { accept: "application/json" } },
+  );
+  if (!res.ok) throw new TiingoError(`Tiingo ตอบกลับผิดพลาด (${res.status}) สำหรับประวัติราคา ${ticker}`);
+  const data = (await res.json()) as { date: string; close: number }[];
+  if (!Array.isArray(data) || data.length === 0) {
+    throw new TiingoError(`ไม่มีข้อมูลราคาย้อนหลังสำหรับ ${ticker}`);
+  }
+  return data.map((d) => ({ date: d.date.slice(0, 10), close: d.close }));
+}
+
 export function pctReturn(current: number, previous: number): number {
   if (!previous) return 0;
   return ((current - previous) / previous) * 100;

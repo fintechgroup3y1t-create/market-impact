@@ -6,7 +6,7 @@ import { NextResponse } from "next/server";
 import { getDb, isDatabaseConfigured } from "@/db/client";
 import { marketMetrics } from "@/db/schema";
 import { getCrudeStocks } from "@/lib/econ/eia";
-import { getCpiYoy, getFedFundsRate, getNonfarmPayrollChange } from "@/lib/econ/fred";
+import { getCpiYoy, getFedFundsRate, getNonfarmPayrollChange, getUs10yYield } from "@/lib/econ/fred";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -55,6 +55,17 @@ export async function GET(request: Request) {
     } catch (err) {
       errors.push(`${job.key}: ${err instanceof Error ? err.message : String(err)}`);
     }
+  }
+
+  // ผลตอบแทนพันธบัตร 10 ปีของจริงจาก FRED (หน่วย % ต่อวัน) แปลงเป็นการเปลี่ยนแปลงหน่วย bps เอง
+  // แยกจาก entityKey "US10Y" ที่ /api/cron/prices เขียนไว้ (นั่นคือราคา ETF ตัวแทน TLT คนละตัวเลขกัน)
+  try {
+    const y = await getUs10yYield();
+    const bps = (y.latest - y.previous) * 100;
+    await upsertMetric("US10Y", "chg_bps", bps, "bps", asOfDate);
+    fetched.push("US10Y_YIELD");
+  } catch (err) {
+    errors.push(`US10Y_YIELD: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   return NextResponse.json(
