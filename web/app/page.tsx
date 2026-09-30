@@ -4,7 +4,7 @@ import { Footer } from "@/components/Footer";
 import { ImpactMap } from "@/components/ImpactMap";
 import { Journey } from "@/components/Journey";
 import { lineVar } from "@/components/LineBadge";
-import { Arrowed, dirClass } from "@/components/Metric";
+import { Arrowed } from "@/components/Metric";
 import { Quiz } from "@/components/Quiz";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { allLines, getLine, getMetrics, home } from "@/lib/data";
@@ -36,13 +36,11 @@ export default async function HomePage() {
       <div className="pulse" aria-label="ภาพรวมตลาด ราคาปิดล่าสุด">
         {home.pulse.map((p) => {
           const tpl = `{{${p.metric}}}`;
-          const colored = !p.metric.endsWith("_bps"); // ผลตอบแทนพันธบัตรไม่ใส่สีตามดีไซน์
           return (
             <div key={p.metric}>
               <span>{p.label}</span>
-              <b className={colored ? dirClass(tpl, metrics) : undefined}>
-                <Arrowed text={tpl} metrics={metrics} />
-              </b>
+              {/* ไม่ใส่สี pos/neg ตรงนี้ เพราะสีนั้นถูกจองไว้แทน Positive/Negative Exposure ของหุ้นแล้ว ใช้ลูกศรบอกทิศทางพอ */}
+              <b><Arrowed text={tpl} metrics={metrics} /></b>
             </div>
           );
         })}

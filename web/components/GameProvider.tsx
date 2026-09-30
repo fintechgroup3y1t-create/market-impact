@@ -143,7 +143,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       setDone(next);
       gain(n, msg);
       if (next.lines && next.quiz && next.evidence) {
-        timers.current.push(setTimeout(() => gain(20, "ครบทุกสถานีวันนี้ ได้เหรียญ รู้ทันน้ำมัน"), 2000));
+        timers.current.push(setTimeout(() => gain(20, "ครบทุกสถานีวันนี้ ได้เหรียญพิเศษ"), 2000));
       }
     },
     [gain],
