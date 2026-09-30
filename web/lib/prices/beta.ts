@@ -6,7 +6,8 @@ import type { DailyClose } from "./tiingo";
 /** อย่างน้อยกี่วันที่จับคู่กันได้ถึงจะถือว่าคำนวณได้น่าเชื่อถือพอ (ประมาณ 3 เดือนซื้อขาย) */
 const MIN_PAIRED_DAYS = 60;
 
-function dailyReturns(closes: DailyClose[]): Map<string, number> {
+/** วันที่ -> ผลตอบแทนรายวัน (close-to-close) ใช้ร่วมกันทั้งการคำนวณ Beta และ backtest.ts */
+export function dailyReturns(closes: DailyClose[]): Map<string, number> {
   const sorted = [...closes].sort((a, b) => a.date.localeCompare(b.date));
   const out = new Map<string, number>();
   for (let i = 1; i < sorted.length; i++) {

@@ -56,6 +56,7 @@ export default function AdminPage() {
   const [writeMode, setWriteMode] = useState<"form" | "json">("form");
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<NewsItem[] | null>(null);
+  const [backtestResult, setBacktestResult] = useState<string | null>(null);
 
   useEffect(() => {
     const saved = typeof window !== "undefined" ? sessionStorage.getItem(STORAGE_KEY) : null;
@@ -186,6 +187,24 @@ export default function AdminPage() {
     }
   }
 
+  async function computeBacktestNow() {
+    setBusy(true);
+    setMessage(null);
+    setBacktestResult(null);
+    try {
+      const res = await fetch(`/api/admin/compute-backtest`, { headers: headers() });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "ไม่ทราบสาเหตุ");
+      const errNote = data.errors?.length ? ` (มีบางตัวดึงราคาไม่สำเร็จ ${data.errors.length} รายการ)` : "";
+      setMessage(`คำนวณ backtest สำเร็จ${errNote} — คัดลอกตัวเลขด้านล่างไปแทนที่ [n]/[x.x%]/[ปี] ในเนื้อหาเอง`);
+      setBacktestResult(JSON.stringify(data.results, null, 2));
+    } catch (err) {
+      setMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function searchNews() {
     const q = searchQuery.trim();
     if (!q) return;
@@ -296,6 +315,25 @@ export default function AdminPage() {
           ใช้เวลาประมาณครึ่งถึงหนึ่งนาที — <b>อย่ากดพร้อมกับตอนที่ cron ดึงราคาประจำวันกำลังทำงาน</b> เพราะแผนฟรีของ Tiingo จำกัดโควตารายชั่วโมงร่วมกัน
           ถ้ากดแล้วเจอ error โควตาเต็ม ให้รอประมาณ 1 ชั่วโมงแล้วลองใหม่
         </p>
+      </section>
+
+      <section className="sec">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2>สถิติในอดีต (backtest) สำหรับข้อความ &quot;[n] ครั้ง ตั้งแต่ปี [ปี]&quot;</h2>
+          <button type="button" className="chip" disabled={busy} onClick={computeBacktestNow}>
+            คำนวณ backtest
+          </button>
+        </div>
+        <p className="small">
+          ดึงราคาย้อนหลังตั้งแต่ปี 2015 มาแบ่งเป็นช่วง ๆ นับว่าน้ำมัน/ดอลลาร์ (ผ่านราคาทองคำ) ขยับเกินเกณฑ์กี่ครั้ง แล้ววัดผลตอบแทนของหุ้นสายการบิน/เหมืองทองในช่วงเดียวกันเทียบตลาด
+          (สถิติล้วน ๆ ไม่ใช้ AI) — ผลลัพธ์เป็น JSON ให้คัดลอกตัวเลขไปแทนที่ข้อความในโค้ดเอง ยังไม่เขียนกลับให้อัตโนมัติ ใช้เวลาประมาณ 1 นาที
+          <b> อย่ากดพร้อมกับ cron ราคาประจำวันหรือปุ่มคำนวณ Beta</b> เพราะแชร์โควตา Tiingo กัน
+        </p>
+        {backtestResult && (
+          <pre style={{ fontSize: 12, overflowX: "auto", background: "var(--chalk)", padding: 10, borderRadius: 8, marginTop: 8 }}>
+            {backtestResult}
+          </pre>
+        )}
       </section>
 
       <section className="sec">
