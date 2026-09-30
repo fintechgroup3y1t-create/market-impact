@@ -31,7 +31,7 @@ export function Journey() {
       </div>
       <p className="jtitle" id="jh">เส้นทางเรียนรู้วันนี้</p>
       <div className="jtrack" aria-hidden="true">
-        <span className="jfill" style={{ width: `${fill}%` }} />
+        <span className="jfill" style={{ transform: `scaleX(${fill / 100})` }} />
         {quests.map((q, i) => (
           <span key={q.id} className={g.done[q.id] ? "jst done" : "jst"} style={{ left: `${i * 50}%` }} />
         ))}
