@@ -2,6 +2,7 @@
 // ไม่มี AI จัดประเภทอัตโนมัติ (ตามที่ตกลงกันไว้ในชิ้นที่ 5 — ประหยัดค่าใช้จ่าย)
 
 import { NextResponse } from "next/server";
+import { getManualSecret } from "@/lib/admin-auth";
 import { getDb, isDatabaseConfigured } from "@/db/client";
 import { fetchLatestNews, saveArticlesToDb } from "@/lib/news/marketaux";
 
@@ -11,7 +12,7 @@ export const maxDuration = 30;
 export async function GET(request: Request) {
   const auth = request.headers.get("authorization");
   const isCron = process.env.CRON_SECRET && auth === `Bearer ${process.env.CRON_SECRET}`;
-  const manualSecret = request.headers.get("x-admin-secret") ?? new URL(request.url).searchParams.get("secret");
+  const manualSecret = getManualSecret(request);
   const isManual = process.env.ADMIN_SECRET && manualSecret === process.env.ADMIN_SECRET;
   if (!isCron && !isManual) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

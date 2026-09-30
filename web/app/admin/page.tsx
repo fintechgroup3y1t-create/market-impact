@@ -75,7 +75,9 @@ export default function AdminPage() {
   }, [unlocked]);
 
   function headers() {
-    return { "x-admin-secret": secret };
+    // HTTP header ส่งได้แค่ตัวอักษร ASCII เท่านั้น ถ้ารหัสผ่านมีภาษาไทยหรืออักขระอื่นที่ไม่ใช่ ASCII
+    // เบราว์เซอร์จะโยน error ทันทีตอนสร้าง request (พังทุกปุ่มที่ต้องยืนยันตัวตน) — เข้ารหัสก่อนส่งเสมอ
+    return { "x-admin-secret": encodeURIComponent(secret) };
   }
 
   async function refresh() {
