@@ -170,6 +170,22 @@ export default function AdminPage() {
     }
   }
 
+  async function computeBetaNow() {
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/compute-sensitivity`, { headers: headers() });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "ไม่ทราบสาเหตุ");
+      const errNote = data.errors?.length ? ` (มีบางตัวคำนวณไม่สำเร็จ ${data.errors.length} รายการ ดู log ฝั่งเซิร์ฟเวอร์)` : "";
+      setMessage(`คำนวณ Beta สำเร็จ ${data.computed}/${data.total} บริษัท${errNote}`);
+    } catch (err) {
+      setMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function searchNews() {
     const q = searchQuery.trim();
     if (!q) return;
@@ -266,6 +282,20 @@ export default function AdminPage() {
             ))}
           </div>
         )}
+      </section>
+
+      <section className="sec">
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <h2>Beta ต่อปัจจัย (น้ำมัน / ดอกเบี้ย / ดอลลาร์)</h2>
+          <button type="button" className="chip" disabled={busy} onClick={computeBetaNow}>
+            คำนวณ Beta ใหม่
+          </button>
+        </div>
+        <p className="small">
+          ดึงราคาปิดย้อนหลัง ~2 ปีของหุ้น 35 ตัวที่มีหน้าหลักฐาน + ETF ตัวแทนของแต่ละปัจจัย มาคำนวณทางสถิติ (ไม่ใช้ AI) แทนที่ &quot;[ไม่มีข้อมูล]&quot;
+          ใช้เวลาประมาณครึ่งถึงหนึ่งนาที — <b>อย่ากดพร้อมกับตอนที่ cron ดึงราคาประจำวันกำลังทำงาน</b> เพราะแผนฟรีของ Tiingo จำกัดโควตารายชั่วโมงร่วมกัน
+          ถ้ากดแล้วเจอ error โควตาเต็ม ให้รอประมาณ 1 ชั่วโมงแล้วลองใหม่
+        </p>
       </section>
 
       <section className="sec">

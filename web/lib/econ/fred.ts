@@ -53,3 +53,7 @@ export const getFedFundsRate = () => fetchObservations("FEDFUNDS");
 
 /** การเปลี่ยนแปลงการจ้างงานนอกภาคเกษตรจากเดือนก่อน หน่วยพันตำแหน่ง */
 export const getNonfarmPayrollChange = () => fetchObservations("PAYEMS", "chg");
+
+/** ผลตอบแทนพันธบัตรรัฐบาลสหรัฐฯ อายุ 10 ปี (DGS10) หน่วย % ต่อวัน ใช้คำนวณการเปลี่ยนแปลงเป็น bps เอง
+ * (ของจริงจาก FRED โดยตรง ไม่ใช่ ETF ตัวแทนแบบราคาหุ้น) */
+export const getUs10yYield = () => fetchObservations("DGS10");
