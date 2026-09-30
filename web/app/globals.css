@@ -32,7 +32,7 @@ p{margin:0}
 
 /* home */
 .date{margin-top:22px;font-size:13px;color:var(--ink2)}
-.mood{font-family:var(--font-chakra),var(--font-anuphan),sans-serif;font-size:38px;font-weight:700;line-height:1.15;margin:6px 0 0;letter-spacing:-.01em}
+.mood{font-family:var(--font-chakra),var(--font-anuphan),sans-serif;font-size:clamp(26px,7vw,38px);font-weight:700;line-height:1.2;margin:6px 0 0;letter-spacing:-.01em;text-wrap:balance}
 .pulse{display:flex;margin:22px -20px 0;padding:0 20px;overflow-x:auto;gap:0;scrollbar-width:none}
 .pulse::-webkit-scrollbar{display:none}
 .pulse div{flex:0 0 auto;padding:0 18px 0 0;margin-right:18px;border-right:1px solid var(--rule);display:flex;flex-direction:column}

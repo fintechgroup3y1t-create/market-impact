@@ -67,7 +67,7 @@ export default async function EventPage({ params }: Props) {
       <BackBar href="/" label="กลับหน้าแรก" line={line} />
       <h1 className="title">{event.title}</h1>
       <p className="small">
-        อัปเดต {thaiTime(event.updatedAt)}, {sources.length} แหล่งอ้างอิง, ตรวจโดยทีมงานแล้ว
+        อัปเดต {thaiTime(event.updatedAt)}, {sources.length} แหล่งอ้างอิง
       </p>
 
       <DepthProvider>

@@ -39,7 +39,9 @@ import type {
   Template,
 } from "./types";
 
-export const IS_SAMPLE_DATA = true;
+// เดิม hardcode ไว้เป็น true ตลอด ทำให้แบนเนอร์ "ข้อมูลสมมติ" ขึ้นแม้ตอนต่อฐานข้อมูลจริงแล้ว
+// ตอนนี้เช็กจากการตั้งค่าจริง: ไม่มี DATABASE_URL เลย = สมมติ (รันในเครื่อง), ตั้งค่าไว้แล้ว = ของจริง
+export const IS_SAMPLE_DATA = !isDatabaseConfigured();
 
 /**
  * ตัวเลขตลาดจริงจากฐานข้อมูล (ใส่โดย /api/cron/prices เท่านั้น)
