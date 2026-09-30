@@ -6,7 +6,7 @@
 
 import Link from "next/link";
 import type { CSSProperties, KeyboardEvent } from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { EXPOSURE_SHORT } from "@/lib/labels";
 import type { Line, LineColor, MapSign } from "@/lib/types";
 import { useGame } from "./GameProvider";
@@ -19,6 +19,12 @@ export function ImpactMap({ lines, signs }: { lines: Line[]; signs: MapSign[] })
   const pickedLine = lines.find((l) => l.id === picked)!;
   const sign = signs.find((s) => s.lineId === picked);
   const byColor = (c: LineColor) => lines.find((l) => l.color === c)!;
+
+  // สายที่เลือกไว้ตั้งต้น (lines[0]) ก็ถือว่า "สำรวจแล้ว" เหมือนกัน ไม่ต้องรอให้ผู้ใช้แตะซ้ำ
+  useEffect(() => {
+    seeLine(lines[0].id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function pick(id: string) {
     setPicked(id);
@@ -118,6 +124,9 @@ export function ImpactMap({ lines, signs }: { lines: Line[]; signs: MapSign[] })
         <span><i style={{ borderColor: "var(--pos)" }} />บวก = Positive Exposure</span>
         <span><i style={{ borderColor: "var(--neg)" }} />ลบ = Negative Exposure</span>
         <span><i style={{ borderColor: "var(--mix)", borderStyle: "dashed" }} />ผสม = Mixed Exposure</span>
+        <span><i className="mk f" style={{ width: 12, height: 12 }} />จุดทึบ = ข้อเท็จจริง</span>
+        <span><i className="mk a" style={{ width: 12, height: 12 }} />วงกลวง = การวิเคราะห์</span>
+        <span><i className="mk u" style={{ width: 12, height: 12 }} />วงประ = ความไม่แน่นอน</span>
       </div>
 
       {sign && (
