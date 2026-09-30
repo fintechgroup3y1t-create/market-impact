@@ -114,7 +114,9 @@ p{margin:0}
 .gloss{border-bottom:2px dotted var(--a);font-weight:600}
 .def{margin-top:8px;padding:10px 14px;border-radius:12px;background:color-mix(in srgb,var(--a) 9%,transparent);font-size:14px}
 
-.routes{display:flex;gap:8px;margin-top:12px}
+.routes{display:flex;gap:8px;margin:12px -20px 0;padding:0 20px 4px;overflow-x:auto;scrollbar-width:none}
+.routes::-webkit-scrollbar{display:none}
+.routes .chip{flex:0 0 auto;white-space:nowrap}
 .chain{margin-top:18px}
 .stn{display:grid;grid-template-columns:34px 1fr;column-gap:12px}
 .rail{display:flex;flex-direction:column;align-items:center}
@@ -190,8 +192,10 @@ details.q .ans .small{display:block;margin-top:6px}
 .sugg .pill{margin-left:auto}
 
 .day{margin:30px 0 0;font-family:var(--font-chakra);font-size:15px;font-weight:600;color:var(--ink2)}
-.ev{display:grid;grid-template-columns:56px 1fr;gap:14px;padding:16px 0;border-bottom:1px solid var(--rule)}
-.ev .when{font-family:var(--font-chakra);font-weight:600;font-size:14px}
+.ev{padding:16px 0;border-bottom:1px solid var(--rule)}
+.ev .meta{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-bottom:4px}
+.ev .meta .tag::after{content:"·";margin-left:6px;color:var(--rule)}
+.ev .when{font-family:var(--font-chakra);font-weight:600;font-size:13px;color:var(--ink2)}
 .ev .nm{font-weight:700;font-size:16px;line-height:1.45}
 .ev .lk{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;margin-top:4px}
 .ev .lk i{width:14px;height:6px;border-radius:3px;background:var(--lc)}

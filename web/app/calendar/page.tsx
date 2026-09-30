@@ -34,37 +34,37 @@ export default async function CalendarPage() {
               const line = getLine(c.lineId);
               return (
                 <div key={c.name} className="ev">
-                  <span className="when">{c.when}</span>
-                  <div>
+                  <div className="meta">
                     <span className="tag" style={c.status === "released" ? { color: "var(--pos)" } : undefined}>{c.importance}</span>
-                    <div className="nm">{c.name}</div>
-                    {line && (
-                      <span className="lk" style={{ "--lc": lineVar(line) } as CSSProperties}>
-                        <i />
-                        อยู่บน{line.name}วันนี้
-                      </span>
-                    )}
-                    <div className="vals">
-                      {c.values.map((v) => (
-                        <span key={v.label}>
-                          {v.label} <b><T text={v.value} metrics={metrics} /></b>
-                        </span>
-                      ))}
-                    </div>
-                    <details className="q">
-                      <summary>{c.explainer.q}</summary>
-                      <div className="ans">
-                        {c.explainer.a}
-                        {c.explainer.link && (
-                          <>
-                            {" "}
-                            <Link href={c.explainer.link.href}>{c.explainer.link.label}</Link>
-                          </>
-                        )}
-                        <span className="small">{c.explainer.source}</span>
-                      </div>
-                    </details>
+                    <span className="when">{c.when}</span>
                   </div>
+                  <div className="nm">{c.name}</div>
+                  {line && (
+                    <span className="lk" style={{ "--lc": lineVar(line) } as CSSProperties}>
+                      <i />
+                      อยู่บน{line.name}วันนี้
+                    </span>
+                  )}
+                  <div className="vals">
+                    {c.values.map((v) => (
+                      <span key={v.label}>
+                        {v.label} <b><T text={v.value} metrics={metrics} /></b>
+                      </span>
+                    ))}
+                  </div>
+                  <details className="q">
+                    <summary>{c.explainer.q}</summary>
+                    <div className="ans">
+                      {c.explainer.a}
+                      {c.explainer.link && (
+                        <>
+                          {" "}
+                          <Link href={c.explainer.link.href}>{c.explainer.link.label}</Link>
+                        </>
+                      )}
+                      <span className="small">{c.explainer.source}</span>
+                    </div>
+                  </details>
                 </div>
               );
             })}
