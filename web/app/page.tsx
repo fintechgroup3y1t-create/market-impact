@@ -8,7 +8,7 @@ import { Arrowed, dirClass } from "@/components/Metric";
 import { Quiz } from "@/components/Quiz";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { allLines, getLine, getMetrics, home } from "@/lib/data";
-import { thaiDayMonth, thaiTime } from "@/lib/format";
+import { thaiDayMonth } from "@/lib/format";
 
 // ราคาที่แสดงมาจากฐานข้อมูล อัปเดตทุกคืนผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
 export const revalidate = 1800;
@@ -30,12 +30,10 @@ export default async function HomePage() {
         </div>
       </header>
 
-      <p className="date">
-        {thaiDayMonth(home.asOf)}, อัปเดต {thaiTime(home.asOf)}
-      </p>
+      <p className="date">{thaiDayMonth(home.asOf)} · ราคาปิดล่าสุด อัปเดตทุกคืนหลังตลาดสหรัฐฯ ปิด</p>
       <h1 className="mood">{home.mood}</h1>
 
-      <div className="pulse" aria-label="ภาพรวมตลาด ข้อมูลล่าช้า 15 นาที">
+      <div className="pulse" aria-label="ภาพรวมตลาด ราคาปิดล่าสุด">
         {home.pulse.map((p) => {
           const tpl = `{{${p.metric}}}`;
           const colored = !p.metric.endsWith("_bps"); // ผลตอบแทนพันธบัตรไม่ใส่สีตามดีไซน์
@@ -50,9 +48,10 @@ export default async function HomePage() {
         })}
       </div>
 
-      <Journey />
-      <ImpactMap lines={allLines()} signs={home.signs} />
+      {/* ทายก่อนอ่านมาก่อนแผนที่เสมอ ไม่งั้นแผนที่จะเฉลยคำตอบให้ก่อนถาม */}
       <Quiz quiz={home.quiz} />
+      <ImpactMap lines={allLines()} signs={home.signs} />
+      <Journey />
 
       <section className="sec">
         <h2>เรื่องอื่นที่ควรรู้</h2>

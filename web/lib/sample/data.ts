@@ -2725,7 +2725,7 @@ export const relatedPlaceholders: Record<string, { title: string; sub: string; e
 
 export const home: HomeData = {
   asOf: "2026-09-29T09:00:00+07:00",
-  mood: "ตลาดวันนี้กังวลน้ำมันพุ่งจากตะวันออกกลาง ดันเงินเฟ้อและดอลลาร์แข็งค่า",
+  mood: "ตลาดกังวลน้ำมันพุ่ง เงินเฟ้อ และดอลลาร์แข็งค่า",
   pulse: [
     { label: "น้ำมัน WTI", metric: "WTI.ret_1d" },
     { label: "S&P 500", metric: "SPX.ret_1d" },
@@ -2742,7 +2742,7 @@ export const home: HomeData = {
         { exposure: "neg", text: "สายการบิน ค่าเชื้อเพลิงเป็นต้นทุนก้อนใหญ่" },
       ],
       cta: { label: "อ่านเรื่องนี้ใน 1 นาที", href: "/event/oil-mideast-tension" },
-      meta: "3 แหล่งอ้างอิง ตรวจโดยทีมงานแล้ว",
+      meta: "3 แหล่งอ้างอิง",
     },
     {
       lineId: "inflation",
@@ -2750,7 +2750,7 @@ export const home: HomeData = {
       body: "ผู้ว่าการเฟด Lisa Cook ระบุการลงทุนศูนย์ข้อมูล AI กำลังดันราคาชิปและต้นทุนพลังงานให้สูงขึ้น แต่ตลาดแรงงานยังรองรับดอกเบี้ยที่สูงขึ้นได้ เฟดอาจขึ้นดอกเบี้ยอีกครั้งในปีนี้",
       effects: [{ exposure: "mix", text: "หุ้นเทค/เซมิคอนดักเตอร์ ดอกเบี้ยกดมูลค่า แต่ความต้องการ AI หนุนรายได้" }],
       cta: { label: "อ่านเรื่องนี้ใน 1 นาที", href: "/event/fed-rate-hike-tech" },
-      meta: "4 แหล่งอ้างอิง ตรวจโดยทีมงานแล้ว",
+      meta: "4 แหล่งอ้างอิง",
     },
     {
       lineId: "dollar",
@@ -2758,7 +2758,7 @@ export const home: HomeData = {
       body: "ผลตอบแทนพันธบัตรสหรัฐฯ ขึ้นแตะจุดสูงสุดในรอบหลายสิบปี หนุนดอลลาร์ กดราคาทองคำลงแตะระดับต่ำสุดนับตั้งแต่ 5 ส.ค. 2026",
       effects: [{ exposure: "neg", text: "เหมืองทอง/ทองแดง รายได้ผูกกับราคาสินค้าโภคภัณฑ์ที่ถูกกดดัน" }],
       cta: { label: "อ่านเรื่องนี้ใน 1 นาที", href: "/event/dollar-strength-gold" },
-      meta: "3 แหล่งอ้างอิง ตรวจโดยทีมงานแล้ว",
+      meta: "3 แหล่งอ้างอิง",
     },
   ],
   quiz: {
@@ -2773,8 +2773,8 @@ export const home: HomeData = {
     evidenceNote: "อ้างอิง SEC 10-K ของ ExxonMobil และ Delta Air Lines",
   },
   others: [
-    { title: "ตัวเลขเงินเฟ้อสหรัฐฯ ประกาศคืนนี้", sub: "ดูในปฏิทินว่าตลาดจับตาอะไร", lineId: "inflation", href: "/calendar" },
-    { title: "บริษัทชิปรายใหญ่เตรียมประกาศงบไตรมาส", sub: "ผลประกอบการ, [วันที่]" },
+    { title: "ตัวเลขเงินเฟ้อสหรัฐฯ ล่าสุด", sub: "ดูในปฏิทินว่าตลาดจับตาอะไร", lineId: "inflation", href: "/calendar" },
+    { title: "บริษัทชิปรายใหญ่เตรียมประกาศงบไตรมาส", sub: "ติดตามผลประกอบการไตรมาสถัดไป" },
     { title: "EIA ประกาศสต็อกน้ำมันรายสัปดาห์แล้ว", sub: "เกี่ยวข้องกับสายน้ำมันวันนี้", lineId: "oil", href: "/calendar" },
   ],
 };
