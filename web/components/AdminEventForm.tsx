@@ -186,6 +186,7 @@ export default function AdminEventForm({
   const [impactRows, setImpactRows] = useState<ImpactRow[]>([emptyImpact()]);
   const [qaRows, setQaRows] = useState<QaRow[]>([]);
   const [faqRows, setFaqRows] = useState<FaqRow[]>([]);
+  const [previewPayload, setPreviewPayload] = useState<FormEventPayload | null>(null);
 
   function patchRow<T extends { _id: string }>(rows: T[], setRows: (r: T[]) => void, id: string, patch: Partial<T>) {
     setRows(rows.map((r) => (r._id === id ? { ...r, ...patch } : r)));
@@ -241,6 +242,109 @@ export default function AdminEventForm({
   }
 
   const validEvidenceRows = evidenceRows.filter((r) => r.sourceName.trim());
+
+  function lineLabel(id: string) {
+    return LINE_OPTIONS.find((o) => o.id === id)?.label ?? id;
+  }
+  function exposureLabel(id: Exposure) {
+    return EXPOSURE_OPTIONS.find((o) => o.id === id)?.label ?? id;
+  }
+  function claimKindLabel(id: ClaimKind) {
+    return CLAIM_KIND_OPTIONS.find((o) => o.id === id)?.label ?? id;
+  }
+
+  if (previewPayload) {
+    const p = previewPayload;
+    return (
+      <div>
+        <div className="def" style={{ padding: 10, borderColor: "var(--pos)" }}>
+          <b>ตรวจสอบก่อนเผยแพร่</b>
+          <p className="small" style={{ marginTop: 4 }}>
+            กด &quot;ยืนยัน เผยแพร่&quot; แล้วขึ้นเว็บจริงทันที ไม่มีขั้นตอนอนุมัติแยก — อ่านให้ครบก่อนกด (กดถอดออกจากเว็บได้ทีหลังถ้าพลาด)
+          </p>
+        </div>
+
+        <Field label="slug / สาย">
+          <div className="small">{p.slug} — {lineLabel(p.lineId)}</div>
+        </Field>
+        <Field label="หัวข้อเหตุการณ์">
+          <div>{p.title}</div>
+        </Field>
+        <Field label="เกิดอะไรขึ้น">
+          <div className="small">{p.quick.what}</div>
+        </Field>
+        <Field label="ใครได้รับผล">
+          <div className="small">{p.quick.who}</div>
+        </Field>
+        {p.quick.tickers.length > 0 && (
+          <Field label="หุ้นที่เกี่ยวข้อง">
+            <div className="small">{p.quick.tickers.join(", ")}</div>
+          </Field>
+        )}
+        {p.deep.watch && (
+          <Field label="สิ่งที่ควรจับตาต่อ">
+            <div className="small">{p.deep.watch}</div>
+          </Field>
+        )}
+
+        <div style={{ marginTop: 20, paddingTop: 12, borderTop: "1.5px solid var(--rule)" }}>
+          <b>หลักฐาน ({p.evidence.length})</b>
+          {p.evidence.map((ev) => (
+            <div key={ev.key} className="def" style={{ padding: 10, marginTop: 8 }}>
+              <span className="small" style={{ opacity: 0.6 }}>{ev.key}</span>
+              <div>{ev.sourceName} <span className="small">({ev.kind})</span></div>
+              {ev.url && <div className="small">{ev.url}</div>}
+              {ev.note && <div className="small">{ev.note}</div>}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 20, paddingTop: 12, borderTop: "1.5px solid var(--rule)" }}>
+          <b>ข้ออ้าง ({p.claims.length})</b>
+          {p.claims.map((c, i) => (
+            <div key={i} className="def" style={{ padding: 10, marginTop: 8 }}>
+              <span className="small" style={{ opacity: 0.6 }}>{claimKindLabel(c.kind)}</span>
+              <div>{c.text}</div>
+              {c.evidenceKeys.length > 0 && <div className="small">อ้างอิง: {c.evidenceKeys.join(", ")}</div>}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 20, paddingTop: 12, borderTop: "1.5px solid var(--rule)" }}>
+          <b>หุ้นที่ได้รับผล ({p.impacts.length})</b>
+          {p.impacts.map((im, i) => (
+            <div key={i} className="def" style={{ padding: 10, marginTop: 8 }}>
+              <b>{im.ticker}</b> — {exposureLabel(im.exposure)}
+              {im.reason && <div className="small">{im.reason}</div>}
+            </div>
+          ))}
+        </div>
+
+        <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <button
+            type="button"
+            className="chip"
+            disabled={busy}
+            onClick={() => setPreviewPayload(null)}
+          >
+            กลับไปแก้ไข
+          </button>
+          <button
+            type="button"
+            className="cta"
+            style={{ border: "none", cursor: "pointer" }}
+            disabled={busy}
+            onClick={async () => {
+              await onSubmit(p);
+              setPreviewPayload(null);
+            }}
+          >
+            ยืนยัน เผยแพร่ขึ้นเว็บจริง
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -467,10 +571,10 @@ export default function AdminEventForm({
           const payload = buildPayload();
           const errors = validate(payload, knownTickers);
           setFormErrors(errors);
-          if (errors.length === 0) onSubmit(payload);
+          if (errors.length === 0) setPreviewPayload(payload);
         }}
       >
-        บันทึกและเผยแพร่ขึ้นเว็บทันที
+        ตรวจสอบก่อนเผยแพร่
       </button>
     </div>
   );
