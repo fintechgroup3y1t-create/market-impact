@@ -116,3 +116,82 @@ export function chunkedEventStudy(
   const avgExcessReturnPct = events.reduce((s, e) => s + e.excessReturnPct, 0) / events.length;
   return { sinceYear, occurrences: events.length, avgExcessReturnPct, events };
 }
+
+// ส่วนด้านล่าง: backtest แบบ "ความผันผวน" (volatility) แยกจาก chunkedEventStudy ด้านบนที่วัด "ผลตอบแทนเฉลี่ย"
+// ใช้สำหรับข้อความประเภท "หุ้นกลุ่มนี้มักผันผวนมากกว่าปกติ" ซึ่งเป็นคนละคำถามกับ "หุ้นกลุ่มนี้มักได้ผลตอบแทนดี/แย่กว่าตลาด"
+// วิธี: หาส่วนเบี่ยงเบนมาตรฐาน (standard deviation) ของผลตอบแทนรายวันของตะกร้าหุ้นในช่วงที่ตัวกระตุ้นขยับถึงเกณฑ์
+// (sample stdev) เทียบกับส่วนเบี่ยงเบนมาตรฐานของผลตอบแทนรายวันช่วงอื่น ๆ ทั้งหมด (baseline)
+
+export interface VolatilityEvent {
+  startDate: string;
+  endDate: string;
+  triggerReturnPct: number;
+  basketVolatilityPct: number; // ส่วนเบี่ยงเบนมาตรฐานของผลตอบแทนรายวันของตะกร้าในช่วงนี้ (%)
+}
+
+export interface VolatilityResult {
+  sinceYear: number;
+  occurrences: number;
+  avgEventVolatilityPct: number;
+  baselineVolatilityPct: number;
+  events: VolatilityEvent[];
+}
+
+function stdevPct(dailyReturnsList: number[]): number {
+  if (dailyReturnsList.length < 2) return 0;
+  const mean = dailyReturnsList.reduce((s, r) => s + r, 0) / dailyReturnsList.length;
+  const variance = dailyReturnsList.reduce((s, r) => s + (r - mean) ** 2, 0) / (dailyReturnsList.length - 1);
+  return Math.sqrt(variance) * 100;
+}
+
+/** คืนค่า null ถ้าข้อมูลย้อนหลังสั้นเกินจะแบ่งช่วงได้อย่างมีความหมาย */
+export function chunkedVolatilityStudy(
+  triggerCloses: DailyClose[],
+  basketCloses: DailyClose[][],
+  opts: BacktestOptions,
+): VolatilityResult | null {
+  const triggerByDate = closesByDate(triggerCloses);
+  const basketReturnByDate = basketDailyReturns(basketCloses);
+  const minChunks = opts.minChunks ?? 20;
+
+  const dates = [...triggerByDate.keys()].sort();
+  if (dates.length < opts.windowDays * minChunks) return null;
+
+  const events: VolatilityEvent[] = [];
+  const eventDates = new Set<string>();
+
+  for (let i = 0; i + opts.windowDays < dates.length; i += opts.windowDays) {
+    const startDate = dates[i];
+    const endDate = dates[i + opts.windowDays];
+    const startPrice = triggerByDate.get(startDate)!;
+    const endPrice = triggerByDate.get(endDate)!;
+    const triggerReturnPct = ((endPrice - startPrice) / startPrice) * 100;
+
+    const qualifies = opts.direction === "up" ? triggerReturnPct >= opts.thresholdPct : triggerReturnPct <= -opts.thresholdPct;
+    if (!qualifies) continue;
+
+    const windowReturns: number[] = [];
+    for (let j = i + 1; j <= i + opts.windowDays; j++) {
+      const r = basketReturnByDate.get(dates[j]);
+      if (r !== undefined) {
+        windowReturns.push(r);
+        eventDates.add(dates[j]);
+      }
+    }
+    if (windowReturns.length < 2) continue;
+    events.push({ startDate, endDate, triggerReturnPct, basketVolatilityPct: stdevPct(windowReturns) });
+  }
+
+  const sinceYear = new Date(dates[0]).getFullYear();
+  if (events.length === 0) {
+    return { sinceYear, occurrences: 0, avgEventVolatilityPct: 0, baselineVolatilityPct: 0, events: [] };
+  }
+
+  // baseline = ผลตอบแทนรายวันของตะกร้าทั้งหมดที่ "ไม่ได้" อยู่ในช่วงที่ตัวกระตุ้นขยับถึงเกณฑ์
+  const baselineReturns = [...basketReturnByDate.entries()].filter(([d]) => !eventDates.has(d)).map(([, r]) => r);
+
+  const avgEventVolatilityPct = events.reduce((s, e) => s + e.basketVolatilityPct, 0) / events.length;
+  const baselineVolatilityPct = stdevPct(baselineReturns);
+
+  return { sinceYear, occurrences: events.length, avgEventVolatilityPct, baselineVolatilityPct, events };
+}

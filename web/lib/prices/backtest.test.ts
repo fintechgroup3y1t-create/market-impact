@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { chunkedEventStudy } from "./backtest";
+import { chunkedEventStudy, chunkedVolatilityStudy } from "./backtest";
 import type { DailyClose } from "./tiingo";
 
 function dateAt(i: number): string {
@@ -121,5 +121,66 @@ describe("chunkedEventStudy", () => {
     expect(result!.occurrences).toBe(1);
     expect(result!.events[0].basketReturnPct).toBeCloseTo(6, 4);
     expect(result!.events[0].excessReturnPct).toBeCloseTo(6, 4); // market flat ที่ 0%
+  });
+});
+
+describe("chunkedVolatilityStudy", () => {
+  it("returns null when there isn't enough history to form minChunks windows", () => {
+    const short = buildCloses(Array(10).fill(0));
+    expect(chunkedVolatilityStudy(short, [short], { windowDays: WINDOW, thresholdPct: 3, direction: "down" })).toBeNull();
+  });
+
+  it("measures higher volatility during qualifying windows than the flat baseline", () => {
+    // ช่วงที่เริ่มต้นที่ i=15 และ i=50 (ตรงกับ windowDays=5 พอดี) เป็น "เหตุการณ์" ส่วนช่วงอื่นเรียบ 0% ตลอด
+    // หมายเหตุ: ฟังก์ชันวัด window ของช่วงที่เริ่มที่ index i จาก return ตำแหน่ง i+1..i+windowDays (ไม่ใช่ i..i+windowDays-1)
+    // ต้องวางค่าให้ตรงตำแหน่งนี้เป๊ะ ไม่งั้นค่าที่ตั้งใจจะ "รั่ว" ไปปนกับ baseline ของช่วงข้างเคียง
+    const n = WINDOW * CHUNKS;
+    const triggerReturns = Array(n).fill(0);
+    const basketReturns = Array(n).fill(0);
+    // สลับ +5%/-5% ทุกวันในช่วงเหตุการณ์ -> ผันผวนสูงชัดเจน เทียบกับ baseline ที่เรียบ 0% ตลอด
+    const oscillating = [0.05, -0.05, 0.05, -0.05, 0.05];
+
+    for (const i of [15, 50]) {
+      triggerReturns[i + 1] = -0.04; // ลงทีเดียว 4% ในวันแรกของ window -> เกินเกณฑ์ 3%
+      for (let k = 0; k < WINDOW; k++) basketReturns[i + 1 + k] = oscillating[k];
+    }
+
+    const trigger = buildCloses(triggerReturns);
+    const basket = buildCloses(basketReturns);
+    const result = chunkedVolatilityStudy(trigger, [basket], { windowDays: WINDOW, thresholdPct: 3, direction: "down" });
+
+    expect(result).not.toBeNull();
+    expect(result!.occurrences).toBe(2);
+    expect(result!.sinceYear).toBe(2024);
+    expect(result!.baselineVolatilityPct).toBeCloseTo(0, 4); // ช่วงอื่นเรียบ 0% ตลอด
+    expect(result!.avgEventVolatilityPct).toBeGreaterThan(result!.baselineVolatilityPct);
+    for (const e of result!.events) {
+      expect(e.triggerReturnPct).toBeCloseTo(-4, 4);
+      expect(e.basketVolatilityPct).toBeGreaterThan(0);
+    }
+  });
+
+  it("direction: down only counts drops past -threshold, not rises", () => {
+    const returns: number[] = [];
+    for (let c = 0; c < CHUNKS; c++) {
+      for (let d = 0; d < WINDOW; d++) {
+        if (c === 5 && d === 0) returns.push(-0.08); // ลง 8% -> ควรนับ (เกณฑ์ 3%)
+        else if (c === 6 && d === 0) returns.push(0.08); // ขึ้น 8% -> ไม่ควรนับเพราะ direction คือ "down"
+        else returns.push(0);
+      }
+    }
+    const trigger = buildCloses(returns);
+    const flatBasket = buildCloses(Array(WINDOW * CHUNKS).fill(0));
+    const result = chunkedVolatilityStudy(trigger, [flatBasket], { windowDays: WINDOW, thresholdPct: 3, direction: "down" });
+    expect(result!.occurrences).toBe(1);
+  });
+
+  it("finds nothing when the trigger never crosses the threshold", () => {
+    const flat = Array(WINDOW * CHUNKS).fill(0.001);
+    const trigger = buildCloses(flat);
+    const basket = buildCloses(flat);
+    const result = chunkedVolatilityStudy(trigger, [basket], { windowDays: WINDOW, thresholdPct: 3, direction: "down" });
+    expect(result).not.toBeNull();
+    expect(result!.occurrences).toBe(0);
   });
 });
