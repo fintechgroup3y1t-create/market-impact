@@ -13,8 +13,7 @@ import { Footer } from "@/components/Footer";
 import { WatchlistButton } from "@/components/WatchlistButton";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { EXPOSURE_SHORT } from "@/lib/labels";
-import { loadReducer } from "./load-state";
-import type { PortfolioItem } from "@/app/api/portfolio/route";
+import { fetchPortfolioItems, FetchTimeoutError, loadReducer } from "./load-state";
 
 export default function PortfolioPage() {
   const { tickers, hydrated } = useWatchlist();
@@ -33,13 +32,14 @@ export default function PortfolioPage() {
 
     const controller = new AbortController();
     dispatch({ type: "start" });
-    fetch(`/api/portfolio?tickers=${encodeURIComponent(tickerKey)}`, { signal: controller.signal })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok || !data.ok) throw new Error(data.error ?? "ไม่ทราบสาเหตุ");
-        dispatch({ type: "success", items: data.items as PortfolioItem[] });
-      })
+    fetchPortfolioItems(tickerKey, controller.signal)
+      .then((items) => dispatch({ type: "success", items }))
       .catch((err) => {
+        // หมดเวลารอ (fetchPortfolioItems มี timeout ในตัว) — error จริง ต้องแจ้งผู้ใช้พร้อมปุ่มลองใหม่
+        if (err instanceof FetchTimeoutError) {
+          dispatch({ type: "error", message: err.message });
+          return;
+        }
         // คำขอถูกยกเลิกเพราะ dependency เปลี่ยนหรือออกจากหน้าไปแล้ว ไม่ใช่ error จริง ไม่ต้องอัปเดตสถานะ
         if (controller.signal.aborted) return;
         dispatch({ type: "error", message: err instanceof Error ? err.message : "โหลดข้อมูลไม่สำเร็จ" });
