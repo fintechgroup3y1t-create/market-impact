@@ -7,6 +7,7 @@ import { lineVar } from "@/components/LineBadge";
 import { Arrowed } from "@/components/Metric";
 import { Quiz } from "@/components/Quiz";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { PortfolioEntryCard } from "@/components/WatchlistProvider";
 import { allLines, getLine, getMetrics, home } from "@/lib/data";
 import { thaiDayMonth } from "@/lib/format";
 
@@ -45,6 +46,8 @@ export default async function HomePage() {
           );
         })}
       </div>
+
+      <PortfolioEntryCard />
 
       {/* ทายก่อนอ่านมาก่อนแผนที่เสมอ ไม่งั้นแผนที่จะเฉลยคำตอบให้ก่อนถาม */}
       <Quiz quiz={home.quiz} />

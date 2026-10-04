@@ -3,6 +3,7 @@ import { Anuphan, Chakra_Petch } from "next/font/google";
 import "./globals.css";
 import { GameProvider } from "@/components/GameProvider";
 import { TabBar } from "@/components/TabBar";
+import { WatchlistProvider } from "@/components/WatchlistProvider";
 import { IS_SAMPLE_DATA } from "@/lib/data";
 
 const chakra = Chakra_Petch({
@@ -47,10 +48,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <p className="demo">ตัวอย่างสำหรับทดลอง ข้อมูลและตัวเลขทุกตัวในเว็บนี้เป็นข้อมูลสมมติ ไม่ใช่ราคาจริง</p>
         )}
         <GameProvider>
-          <main className="screen">
-            <div className="wrap">{children}</div>
-          </main>
-          <TabBar />
+          <WatchlistProvider>
+            <main className="screen">
+              <div className="wrap">{children}</div>
+            </main>
+            <TabBar />
+          </WatchlistProvider>
         </GameProvider>
       </body>
     </html>
