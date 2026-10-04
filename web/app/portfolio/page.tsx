@@ -8,49 +8,45 @@
 
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useReducer, useState } from "react";
 import { Footer } from "@/components/Footer";
 import { WatchlistButton } from "@/components/WatchlistButton";
 import { useWatchlist } from "@/components/WatchlistProvider";
 import { EXPOSURE_SHORT } from "@/lib/labels";
-import type { PortfolioItem } from "@/app/api/portfolio/route";
-
-type LoadState = { status: "idle" | "loading" | "error" | "done"; items: PortfolioItem[]; error: string | null };
+import { fetchPortfolioItems, FetchTimeoutError, loadReducer } from "./load-state";
 
 export default function PortfolioPage() {
   const { tickers, hydrated } = useWatchlist();
-  const [state, setState] = useState<LoadState>({ status: "idle", items: [], error: null });
-  // กัน fetch ซ้ำถ้ารายการ ticker ไม่ได้เปลี่ยนจริง (เช่น re-render จากเหตุผลอื่น)
-  const lastFetchedKey = useRef<string | null>(null);
+  const [state, dispatch] = useReducer(loadReducer, { status: "idle", items: [], error: null });
+  // เพิ่มค่าทุกครั้งที่กด "ลองใหม่" เพื่อบังคับให้ effect ด้านล่างรันใหม่แม้ tickerKey จะไม่เปลี่ยนเลย
+  const [retryToken, setRetryToken] = useState(0);
 
   const tickerKey = [...tickers].sort().join(",");
 
   useEffect(() => {
     if (!hydrated) return;
-    if (tickers.length === 0) {
-      lastFetchedKey.current = "";
-      setState({ status: "done", items: [], error: null });
+    if (tickerKey === "") {
+      dispatch({ type: "empty" });
       return;
     }
-    if (lastFetchedKey.current === tickerKey) return; // รายการเดิม ไม่ fetch ซ้ำ
-    lastFetchedKey.current = tickerKey;
 
     const controller = new AbortController();
-    setState((s) => ({ ...s, status: "loading", error: null }));
-    fetch(`/api/portfolio?tickers=${encodeURIComponent(tickerKey)}`, { signal: controller.signal })
-      .then(async (res) => {
-        const data = await res.json();
-        if (!res.ok || !data.ok) throw new Error(data.error ?? "ไม่ทราบสาเหตุ");
-        setState({ status: "done", items: data.items as PortfolioItem[], error: null });
-      })
+    dispatch({ type: "start" });
+    fetchPortfolioItems(tickerKey, controller.signal)
+      .then((items) => dispatch({ type: "success", items }))
       .catch((err) => {
+        // หมดเวลารอ (fetchPortfolioItems มี timeout ในตัว) — error จริง ต้องแจ้งผู้ใช้พร้อมปุ่มลองใหม่
+        if (err instanceof FetchTimeoutError) {
+          dispatch({ type: "error", message: err.message });
+          return;
+        }
+        // คำขอถูกยกเลิกเพราะ dependency เปลี่ยนหรือออกจากหน้าไปแล้ว ไม่ใช่ error จริง ไม่ต้องอัปเดตสถานะ
         if (controller.signal.aborted) return;
-        setState((s) => ({ ...s, status: "error", error: err instanceof Error ? err.message : "โหลดข้อมูลไม่สำเร็จ" }));
+        dispatch({ type: "error", message: err instanceof Error ? err.message : "โหลดข้อมูลไม่สำเร็จ" });
       });
 
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hydrated, tickerKey]);
+  }, [hydrated, tickerKey, retryToken]);
 
   return (
     <>
@@ -75,7 +71,7 @@ export default function PortfolioPage() {
         </p>
       )}
 
-      {hydrated && tickers.length > 0 && state.status === "loading" && (
+      {hydrated && tickers.length > 0 && (state.status === "loading" || state.status === "idle") && (
         <p className="muted" style={{ marginTop: 20 }}>กำลังโหลด...</p>
       )}
 
@@ -84,10 +80,7 @@ export default function PortfolioPage() {
           โหลดข้อมูลพอร์ตไม่สำเร็จ: {state.error} —{" "}
           <button
             type="button"
-            onClick={() => {
-              lastFetchedKey.current = null;
-              setState((s) => ({ ...s, status: "idle" }));
-            }}
+            onClick={() => setRetryToken((n) => n + 1)}
             style={{ fontWeight: 700, background: "none", border: "none", color: "var(--a)", cursor: "pointer", padding: 0, font: "inherit" }}
           >
             ลองใหม่

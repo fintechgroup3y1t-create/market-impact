@@ -8,6 +8,11 @@ import { lineVar } from "@/components/LineBadge";
 import { getCompany, getLine, storiesForTicker } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
+// route อื่นที่คุย DB หลาย query ในคำขอเดียว (/api/admin/seed, /api/admin/compute-sensitivity,
+// /api/admin/migrate, /api/admin/compute-backtest, /api/cron/*) ตั้งค่านี้ไว้ทุกตัวตาม pattern เดียวกัน
+// แต่ route นี้ไม่เคยตั้งไว้เลยตั้งแต่สร้าง — เพิ่มให้ตรงกับ pattern เดิม กันแพลตฟอร์มตัดการทำงานก่อนเวลา
+// สำหรับ ticker หลายตัวที่ต้อง query หลายรอบ (ไม่ได้ยืนยันว่าเป็นสาเหตุของบั๊กที่รายงาน แค่เป็นความเสี่ยงที่สอดคล้องกัน)
+export const maxDuration = 30;
 
 const TICKER_PATTERN = /^[A-Z]{1,5}$/;
 const MAX_TICKERS = 30; // ตรงกับ MAX_TICKERS ฝั่ง WatchlistProvider.tsx กันคำขอใหญ่ผิดปกติ
