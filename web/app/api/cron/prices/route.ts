@@ -8,6 +8,7 @@ import { getManualSecret } from "@/lib/admin-auth";
 import { getDb, isDatabaseConfigured } from "@/db/client";
 import { entities, marketMetrics, prices } from "@/db/schema";
 import { detectAndDraftEvents } from "@/lib/detect/auto-events";
+import { fetchAndSaveNewsBounded, type NewsIngestResult } from "@/lib/news/marketaux";
 import { getQuote, MARKET_BENCHMARK_KEY, PROXY_TICKERS, pctReturn, SECTOR_GROUPS, sleep } from "@/lib/prices/tiingo";
 
 export const dynamic = "force-dynamic";
@@ -92,6 +93,18 @@ export async function GET(request: Request) {
     await upsertMetric(group.key, "ret_1d", avg, "pct", asOfDate);
   }
 
+  // ดึงข่าวทั่วไปอัตโนมัติต่อจากราคา (ใช้ FOCUS_TICKERS เดิมใน lib/news/marketaux.ts) — เดิมต้องกดปุ่มเองในหน้าแอดมิน
+  // เท่านั้น ไม่มีทางอัตโนมัติเลยเพราะ Vercel Hobby จำกัด 2 cron job (ราคา+ปฏิทินใช้ไปแล้ว) ตอนนี้ยัดเข้า cron ราคาที่
+  // มีอยู่แล้วแทนการเพิ่ม cron/ตัวจับเวลาใหม่ — ไม่ใช้ API key ตัวใหม่ ไม่ชนโควตากับ Tiingo (Marketaux คนละบริการ)
+  // ข้าม (ไม่ error) ถ้ายังไม่ได้ตั้ง MARKETAUX_API_KEY ไว้ เหมือนปุ่มเดิมในหน้าแอดมิน
+  // fetchAndSaveNewsBounded ไม่ throw ออกมาเลย (ดู lib/news/marketaux.ts) + จำกัดเวลาไว้ 15 วิ กัน Marketaux ตอบช้า
+  // แล้วไปแย่งเวลาจาก maxDuration ของงานหลัก (ดึงราคา 39 ticker ด้านบน ซึ่งกินเวลาไปมากแล้ว)
+  let newsIngest: NewsIngestResult | null = null;
+  if (process.env.MARKETAUX_API_KEY) {
+    newsIngest = await fetchAndSaveNewsBounded(db, 15000);
+    if (!newsIngest.ok) errors.push(`newsIngest: ${newsIngest.error}`);
+  }
+
   // ระบบตรวจจับการเคลื่อนไหวผิดปกติ + สร้างเหตุการณ์ร่างอัตโนมัติ (ไม่ใช้ AI) — ดู lib/detect/auto-events.ts
   // ห่อด้วย try/catch เผื่อ error ตรงนี้ไม่ทำให้การดึงราคา (งานหลักของ cron นี้) ล้มเหลวไปด้วย
   let detect: Awaited<ReturnType<typeof detectAndDraftEvents>> | null = null;
@@ -107,6 +120,7 @@ export async function GET(request: Request) {
       asOfDate,
       fetched: Object.keys(returns).length,
       errors,
+      newsIngest,
       autoDetect: detect,
     },
     { headers: { "Cache-Control": "no-store" } },
