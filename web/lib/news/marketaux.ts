@@ -23,11 +23,14 @@ const FOCUS_TICKERS = ["XOM", "CVX", "DAL", "UAL", "NVDA", "AAPL", "JPM", "AMZN"
  * symbols: ระบุ ticker เฉพาะที่อยากได้ข่าว (เช่น ตัวที่ระบบตรวจพบว่าราคาขยับผิดปกติวันนี้)
  *   ไม่ระบุ = ใช้ FOCUS_TICKERS เดิม, ส่ง null = ไม่กรองตาม ticker เลย (ใช้คู่กับ search)
  * search: ค้นด้วยคำสำคัญทั่วไป (เช่น "flood", "Thailand flooding") ไม่ผูกกับ ticker ไหน — ใช้สำหรับข่าวที่ไม่รู้ล่วงหน้าว่าเกี่ยวหุ้นตัวไหน
+ * signal: ใส่ตอนเรียกจากที่มี "เวลาจำกัด" (เช่น cron ราคาที่ใช้เวลาร่วมกับงานอื่นใน maxDuration เดียว)
+ *   เพื่อตัดการรอทิ้งถ้า Marketaux ตอบช้าเกินไป — ทางเรียกเดิมที่ไม่ส่งมา (ปุ่มในหน้าแอดมิน) ไม่กระทบ ยังไม่มี timeout เหมือนก่อน
  */
 export async function fetchLatestNews(
   limit = 20,
   symbols: string[] | null = FOCUS_TICKERS,
   search?: string,
+  signal?: AbortSignal,
 ): Promise<NewsArticle[]> {
   const key = process.env.MARKETAUX_API_KEY;
   if (!key) throw new MarketauxError("ไม่พบ MARKETAUX_API_KEY");
@@ -40,7 +43,7 @@ export async function fetchLatestNews(
   });
   if (symbols?.length) params.set("symbols", symbols.join(","));
   if (search) params.set("search", search);
-  const res = await fetch(`https://api.marketaux.com/v1/news/all?${params}`, { cache: "no-store" });
+  const res = await fetch(`https://api.marketaux.com/v1/news/all?${params}`, { cache: "no-store", signal });
   if (!res.ok) throw new MarketauxError(`Marketaux ตอบกลับผิดพลาด (${res.status})`);
   const data = (await res.json()) as {
     data?: { title: string; url: string; source: string; published_at: string; entities?: { symbol: string }[] }[];
@@ -101,4 +104,42 @@ export async function saveArticlesToDb(db: ReturnType<typeof getDb>, articles: N
   }
 
   return { urlToDocId, insertedUrls };
+}
+
+export interface NewsIngestResult {
+  ok: boolean;
+  fetched: number;
+  inserted: number;
+  skipped: number;
+  error: string | null;
+}
+
+/**
+ * ดึงข่าว (fetchLatestNews) แล้วบันทึก (saveArticlesToDb) ในครั้งเดียว — ไม่ได้เขียน logic ดึง/บันทึก/กันซ้ำ
+ * ขึ้นใหม่ แค่ห่อสองฟังก์ชันเดิมด้วย timeout จำกัดเวลาและสัญญาว่า "ไม่ throw ออกไปเด็ดขาด" ใช้ตอนเรียกจากที่มี
+ * เวลาจำกัดร่วมกับงานอื่นที่สำคัญกว่า (เช่น cron ราคาที่มี maxDuration เดียวกันทั้งไฟล์) — ถ้า Marketaux ตอบช้า/
+ * พัง หรือบันทึกลง DB ไม่สำเร็จ จะได้ผลลัพธ์ที่ระบุสถานะชัดเจนกลับมาแทน ไม่ทำให้งานหลักของผู้เรียกล้มเหลวไปด้วย
+ * (ปุ่ม "ดึงข่าวใหม่ตอนนี้"/ค้นข่าวในหน้าแอดมิน และระบบตรวจจับอัตโนมัติยังเรียก fetchLatestNews/saveArticlesToDb
+ * ตรง ๆ แบบเดิมทุกจุด ไม่ได้เปลี่ยนมาเรียกผ่านฟังก์ชันนี้ เพื่อไม่กระทบพฤติกรรมเดิมของจุดอื่น)
+ */
+export async function fetchAndSaveNewsBounded(
+  db: ReturnType<typeof getDb>,
+  timeoutMs: number,
+  limit = 20,
+  symbols: string[] | null = FOCUS_TICKERS,
+  search?: string,
+): Promise<NewsIngestResult> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const articles = await fetchLatestNews(limit, symbols, search, controller.signal);
+    const { insertedUrls } = await saveArticlesToDb(db, articles);
+    return { ok: true, fetched: articles.length, inserted: insertedUrls.size, skipped: articles.length - insertedUrls.size, error: null };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("fetchAndSaveNewsBounded: ดึง/บันทึกข่าวไม่สำเร็จ", err);
+    return { ok: false, fetched: 0, inserted: 0, skipped: 0, error: message };
+  } finally {
+    clearTimeout(timeoutId);
+  }
 }
