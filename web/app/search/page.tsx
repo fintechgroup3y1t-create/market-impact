@@ -3,7 +3,7 @@ import { Footer } from "@/components/Footer";
 import { lineVar } from "@/components/LineBadge";
 import { dirClass } from "@/components/Metric";
 import { StockSearch, type SearchEntry } from "@/components/StockSearch";
-import { companies, getLine, getMetrics, storiesForTicker } from "@/lib/data";
+import { companies, getLine, getMetrics, publishedEvents, storiesForTicker } from "@/lib/data";
 import { fillTemplate } from "@/lib/format";
 
 export const metadata: Metadata = { title: "ค้นหุ้น" };
@@ -13,11 +13,15 @@ export const metadata: Metadata = { title: "ค้นหุ้น" };
 export const dynamic = "force-dynamic";
 
 export default async function SearchPage() {
-  const metrics = await getMetrics();
+  // ดึงเหตุการณ์ที่เผยแพร่แล้วครั้งเดียวสำหรับทั้ง 35 บริษัท (เดิมแต่ละบริษัทเรียกซ้ำเองผ่าน storiesForTicker
+  // ทำให้ query ตารางเหตุการณ์ซ้ำ 35 ครั้งต่อการเปิดหน้าหนึ่งครั้ง — ดูรายละเอียดใน lib/data.ts)
+  // getMetrics() และ publishedEvents() เป็น DB call คนละตัวกัน ไม่เกี่ยวข้องกัน รันพร้อมกันได้ (เดิมรันทีละตัว
+  // ทำให้เสียเวลาเชื่อมต่อ DB ซ้ำสองรอบโดยไม่จำเป็น)
+  const [metrics, published] = await Promise.all([getMetrics(), publishedEvents()]);
   const entries: SearchEntry[] = await Promise.all(
     companies.map(async (c) => {
       const tpl = `{{${c.ticker}.ret_1d}}`;
-      const stories = await storiesForTicker(c.ticker);
+      const stories = await storiesForTicker(c.ticker, published);
       return {
         ticker: c.ticker,
         name: c.name,

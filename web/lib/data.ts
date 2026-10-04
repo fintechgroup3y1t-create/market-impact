@@ -310,11 +310,21 @@ export interface RelatedStory {
   href?: string;
 }
 
-/** เรื่องที่เกี่ยวข้องกับหุ้นหนึ่งตัว ใช้ในหน้าค้นหุ้น */
-export async function storiesForTicker(ticker: string): Promise<RelatedStory[]> {
-  const published = await publishedEvents();
+/**
+ * เรื่องที่เกี่ยวข้องกับหุ้นหนึ่งตัว ใช้ในหน้าค้นหุ้นและ /api/portfolio
+ *
+ * ส่ง `published` เข้ามาเองได้ (ทางเลือก) — สำคัญเวลาเรียกฟังก์ชันนี้วนหลาย ticker ในคำขอเดียว
+ * (เช่น /search ที่วนทั้ง 35 บริษัท หรือ /api/portfolio ที่วนตาม watchlist): ยืนยันด้วยการนับ log จริงแล้วว่า
+ * React `cache()` ที่ห่อ `allEventsAnyStatus()`/`publishedEvents()` ไว้ **ไม่ได้ dedupe การเรียกซ้ำภายใน
+ * Route Handler/คำขอเดียวกันจริงตามที่โค้ดเดิมสันนิษฐานไว้** (ทดสอบจริง: 4 ticker ในคำขอเดียว = ยิง query
+ * events ซ้ำ 4 ครั้งไม่ใช่ 1 ครั้ง) ทำให้เวลารวมของคำขอยิ่งนานขึ้นเป็นเส้นตรงตามจำนวน ticker และเป็นสาเหตุจริง
+ * ที่ `/api/portfolio` ล้มเหลวเมื่อ watchlist มีมากกว่า ~3 ticker บน Vercel จริง — ผู้เรียกที่วนหลาย ticker
+ * ควร `await publishedEvents()` เองครั้งเดียวก่อน แล้วส่งผลลัพธ์เข้ามาที่นี่ ไม่ให้แต่ละ ticker ไปเรียกซ้ำเอง
+ */
+export async function storiesForTicker(ticker: string, published?: MarketEvent[]): Promise<RelatedStory[]> {
+  const events = published ?? (await publishedEvents());
   const fromEvents: RelatedStory[] = [];
-  for (const e of published) {
+  for (const e of events) {
     for (const i of e.impacts) {
       if (i.ticker !== ticker) continue;
       const exposure = await getExposure(e.slug, ticker);

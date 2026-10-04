@@ -1,11 +1,13 @@
 // Portfolio Impact เฟส 2: อ่านเหตุการณ์ที่เกี่ยวข้องกับ ticker ในรายการ watchlist ของผู้ใช้ (เก็บฝั่งไคลเอนต์)
 // endpoint ภายในเท่านั้น ไม่เรียก API ภายนอกเพิ่ม (ราคา/ข่าว) — อ่านจากฐานข้อมูล/ข้อมูลตัวอย่างเดิมผ่าน lib/data.ts อย่างเดียว
-// publishedEvents()/allEventsAnyStatus() ใน lib/data.ts แคชต่อ request ด้วย React cache() อยู่แล้ว
-// เรียก storiesForTicker() วนหลาย ticker ในคำขอเดียวจึงไม่ query ส่วนที่หนักซ้ำ (verified by reading lib/data.ts)
-
+//
+// เดิมคอมเมนต์ตรงนี้อ้างว่า publishedEvents()/allEventsAnyStatus() แคชต่อ request ด้วย React cache() อยู่แล้ว
+// ซึ่ง**ไม่จริง**ตามที่ตรวจพบจริงด้วยการนับ log (watchlist เกิน 3 ticker ขึ้นไปบน Preview จริงแล้วค้าง/ล้มเหลว
+// เพราะเหตุนี้โดยตรง — 4 ticker ยิง query events table 4 ครั้งแยกกัน ไม่ใช่ 1 ครั้งตามที่สันนิษฐานไว้เดิม)
+// ตอนนี้เรียก publishedEvents() เองครั้งเดียวตรงนี้ แล้วส่งผลลัพธ์เข้า storiesForTicker() ทุก ticker แทน
 import { NextResponse } from "next/server";
 import { lineVar } from "@/components/LineBadge";
-import { getCompany, getLine, storiesForTicker } from "@/lib/data";
+import { getCompany, getLine, publishedEvents, storiesForTicker } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 // route อื่นที่คุย DB หลาย query ในคำขอเดียว (/api/admin/seed, /api/admin/compute-sensitivity,
@@ -51,11 +53,13 @@ export async function GET(request: Request) {
   }
 
   try {
+    // ดึงเหตุการณ์ที่เผยแพร่แล้วครั้งเดียวสำหรับทุก ticker ในคำขอนี้ (ดูหมายเหตุด้านบนของไฟล์ว่าทำไมสำคัญ)
+    const published = await publishedEvents();
     const items: PortfolioItem[] = await Promise.all(
       tickers.map(async (ticker) => {
         const company = getCompany(ticker);
         try {
-          const rawStories = await storiesForTicker(ticker);
+          const rawStories = await storiesForTicker(ticker, published);
           const stories: PortfolioStory[] = rawStories.map((s) => ({
             title: s.title,
             sub: s.sub,

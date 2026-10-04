@@ -10,7 +10,7 @@ import { lineVar } from "@/components/LineBadge";
 import { T } from "@/components/Metric";
 import { Sources } from "@/components/Sources";
 import { getEvent, getEvidence, getExposure, getLine, getMetrics } from "@/lib/data";
-import { fillTemplate, thaiTime } from "@/lib/format";
+import { fillTemplate, thaiDateTime } from "@/lib/format";
 import { EXPOSURE_SHORT } from "@/lib/labels";
 import type { ClaimKind } from "@/lib/types";
 
@@ -67,7 +67,7 @@ export default async function EventPage({ params }: Props) {
       <BackBar href="/" label="กลับหน้าแรก" line={line} />
       <h1 className="title">{event.title}</h1>
       <p className="small">
-        อัปเดต {thaiTime(event.updatedAt)}, {sources.length} แหล่งอ้างอิง
+        อัปเดต {thaiDateTime(event.updatedAt)}, {sources.length} แหล่งอ้างอิง
       </p>
 
       <DepthProvider>
