@@ -3,7 +3,7 @@
 // เหตุการณ์ใหม่ที่เขียนผ่านหน้าแอดมิน (ชิ้นที่ 5) เก็บในฐานข้อมูลจริง แล้ว "รวม" เข้ากับของตัวอย่างตอนแสดงผล
 // "ตัวเลข" (metrics) อ่านจากฐานข้อมูลจริงเสมอตั้งแต่ชิ้นที่ 2 (ดู app/api/cron/prices)
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { cache } from "react";
 import { getDb, isDatabaseConfigured } from "@/db/client";
 import {
@@ -47,11 +47,18 @@ export const IS_SAMPLE_DATA = !isDatabaseConfigured();
  * ตัวเลขตลาดจริงจากฐานข้อมูล (ใส่โดย /api/cron/prices เท่านั้น)
  * ยังไม่มีข้อมูลตัวไหน (เช่น ยังไม่เคยรัน cron หรือฐานข้อมูลต่อไม่ได้) → placeholder นั้นแสดง "[ไม่มีข้อมูล]"
  * ไม่ใช้ข้อมูลสมมติมาแทนที่ เพื่อไม่ให้ใครเข้าใจผิดว่าเป็นตัวเลขจริง
+ *
+ * ตาราง market_metrics เก็บประวัติไว้หลายวัน (unique key คือ entityKey+metric+asOfDate ไม่ใช่แค่ entityKey+metric
+ * ดู db/schema.ts) ตั้งใจให้สะสมได้ เพื่อให้ backtest/compute-sensitivity ใช้ข้อมูลย้อนหลังได้ — แต่ query เดิมตรงนี้
+ * ไม่มี ORDER BY เลย แล้วเขียนทับกันในลูปด้านล่างตามลำดับแถวที่ Postgres คืนมา (ไม่รับประกันว่าเป็นลำดับวันที่)
+ * พอมีมากกว่า 1 วันสำหรับคู่ entityKey+metric เดียวกัน (เกิดขึ้นจริงแล้วตั้งแต่ cron รันมาหลายคืน) ค่าที่โชว์
+ * "วันนี้" อาจเป็นค่าของวันเก่ากว่าแบบสุ่มได้ — เรียง asOfDate จากเก่าไปใหม่ก่อน ให้แถวของวันที่ใหม่ล่าสุดเขียนทับ
+ * วันเก่าเสมอ (ไม่ใช่แถวสุดท้ายที่ Postgres บังเอิญคืนมา)
  */
 export const getMetrics = cache(async (): Promise<MarketMetrics> => {
   if (!isDatabaseConfigured()) return sample.metrics;
   try {
-    const rows = await getDb().select().from(marketMetricsTable);
+    const rows = await getDb().select().from(marketMetricsTable).orderBy(asc(marketMetricsTable.asOfDate));
     const out: MarketMetrics = {};
     for (const r of rows) {
       (out[r.entityKey] ??= {})[r.metric] = { value: r.value, unit: r.unit as MetricValue["unit"] };
