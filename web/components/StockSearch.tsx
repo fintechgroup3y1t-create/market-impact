@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { CSSProperties } from "react";
 import { useId, useState } from "react";
+import { WatchlistButton } from "./WatchlistButton";
 import { EXPOSURE_SHORT } from "@/lib/labels";
 import type { Exposure } from "@/lib/types";
 
@@ -61,7 +62,10 @@ export function StockSearch({ entries, initial }: { entries: SearchEntry[]; init
             <div className="tick" style={{ marginTop: 0, fontSize: 44 }}>{s.ticker}</div>
             <b className={`disp ${s.dir ?? ""}`} style={{ fontSize: 20 }}>{s.ret}</b>
           </div>
-          <p>{s.name}</p>
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+            <p>{s.name}</p>
+            <WatchlistButton ticker={s.ticker} />
+          </div>
           {s.covered ? (
             <>
               <p className="small" style={{ marginTop: 4 }}>อ่อนไหวต่อ {s.sensitivities.join(", ")}</p>

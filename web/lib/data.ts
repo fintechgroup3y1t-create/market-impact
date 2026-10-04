@@ -228,8 +228,11 @@ async function loadDbExposure(eventSlug: string, ticker: string): Promise<StockE
   if (!isDatabaseConfigured()) return undefined;
   try {
     const db = getDb();
-    const [eventRow] = await db.select().from(eventsTable).where(eq(eventsTable.slug, eventSlug));
-    const [entityRow] = await db.select().from(entitiesTable).where(eq(entitiesTable.ticker, ticker));
+    // สอง query นี้เป็นอิสระต่อกัน (ไม่มีฝั่งไหนใช้ผลของอีกฝั่งเป็น input) รันพร้อมกันได้
+    const [[eventRow], [entityRow]] = await Promise.all([
+      db.select().from(eventsTable).where(eq(eventsTable.slug, eventSlug)),
+      db.select().from(entitiesTable).where(eq(entitiesTable.ticker, ticker)),
+    ]);
     if (!eventRow || !entityRow) return undefined;
     const [row] = await db
       .select()
@@ -251,11 +254,13 @@ async function loadDbExposure(eventSlug: string, ticker: string): Promise<StockE
   }
 }
 
-export async function getExposure(slug: string, ticker: string): Promise<StockExposure | undefined> {
+// แคชต่อ request ด้วย React cache() เหมือน getMetrics/allEventsAnyStatus ด้านบน
+// กันเรียกซ้ำคู่ (slug, ticker) เดิมหลายครั้งในคำขอเดียว (เช่น /search ที่เดินผ่านทุกบริษัท) ไม่ให้ยิง query ไม่จำเป็นซ้ำ
+export const getExposure = cache(async (slug: string, ticker: string): Promise<StockExposure | undefined> => {
   const fromSample = sample.exposures.find((x) => x.eventSlug === slug && x.ticker === ticker);
   if (fromSample) return fromSample;
   return loadDbExposure(slug, ticker);
-}
+});
 
 /** ใช้ใน generateStaticParams ของหน้า why-stock — ต้องรู้ล่วงหน้าว่ามี (event, ticker) คู่ไหนบ้าง */
 export async function allExposures(): Promise<StockExposure[]> {

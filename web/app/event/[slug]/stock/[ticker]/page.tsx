@@ -7,6 +7,7 @@ import { BackBar } from "@/components/BackBar";
 import { Footer } from "@/components/Footer";
 import { MarkEvidenceOpened } from "@/components/GameProvider";
 import { dirClass, T } from "@/components/Metric";
+import { WatchlistButton } from "@/components/WatchlistButton";
 import { getCompany, getEvent, getExposure, getLine, getMetrics } from "@/lib/data";
 import { EXPOSURE_LONG } from "@/lib/labels";
 
@@ -42,7 +43,10 @@ export default async function WhyStockPage({ params }: Props) {
       <MarkEvidenceOpened />
       <BackBar href={`/event/${slug}`} label="กลับไปหน้าเหตุการณ์" line={line} />
       <p className="small" style={{ marginTop: 14 }}>ทำไมเราถึงแสดงหุ้นตัวนี้</p>
-      <h1 className="tick">{company.ticker}</h1>
+      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+        <h1 className="tick">{company.ticker}</h1>
+        <WatchlistButton ticker={company.ticker} />
+      </div>
       <p style={{ marginTop: 6 }}>
         {company.name}, {company.sector}
       </p>
