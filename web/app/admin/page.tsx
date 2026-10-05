@@ -81,7 +81,9 @@ export default function AdminPage() {
   }
 
   async function refresh() {
-    setMessage(null);
+    // ไม่เรียก setMessage(null) ที่นี่โดยไม่มีเงื่อนไข — ผู้เรียก (fetchNewsNow/setStatus/submitPayload) ตั้งข้อความ
+    // "สำเร็จ" ไว้ก่อนเรียก refresh() เสมอ ถ้าล้างทิ้งตรงนี้แบบไม่มีเงื่อนไข ข้อความสำเร็จจะหายไปทันทีก่อนผู้ใช้
+    // เห็น (ล้างแล้วค่อยเซ็ตใหม่เฉพาะกรณี error ด้านล่างเท่านั้น ไม่แตะ error path เดิม)
     try {
       const [eventsRes, newsRes, companiesRes] = await Promise.all([
         fetch("/api/admin/events", { headers: headers() }),
