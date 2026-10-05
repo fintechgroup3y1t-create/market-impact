@@ -3,19 +3,24 @@ import type { CSSProperties } from "react";
 import { Footer } from "@/components/Footer";
 import { ImpactMap } from "@/components/ImpactMap";
 import { Journey } from "@/components/Journey";
-import { lineVar } from "@/components/LineBadge";
+import { LineBadge, lineVar } from "@/components/LineBadge";
 import { Arrowed } from "@/components/Metric";
 import { Quiz } from "@/components/Quiz";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { PortfolioEntryCard } from "@/components/WatchlistProvider";
-import { allLines, getLine, getMetrics, home } from "@/lib/data";
-import { thaiDayMonth } from "@/lib/format";
+import { allLines, getLine, getMetrics, home, publishedEvents } from "@/lib/data";
+import { thaiDateTime, thaiDayMonth } from "@/lib/format";
+import { EXPOSURE_SHORT } from "@/lib/labels";
 
 // ราคาที่แสดงมาจากฐานข้อมูล อัปเดตทุกคืนผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
 export const revalidate = 1800;
 
 export default async function HomePage() {
   const metrics = await getMetrics();
+  // เหตุการณ์ล่าสุดที่เผยแพร่แล้ว (รวมตัวอย่าง + ฐานข้อมูลจริงผ่าน publishedEvents() เดิม) — ไม่ hard-code
+  // เรื่องใหม่ลงหน้านี้ เหตุการณ์ที่เขียนผ่านหน้าแอดมินจะขึ้นมาที่นี่เองโดยเรียงจาก updatedAt ล่าสุด
+  const published = await publishedEvents();
+  const latestEvent = [...published].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
   return (
     <>
       <header className="top">
@@ -53,6 +58,32 @@ export default async function HomePage() {
       <Quiz quiz={home.quiz} />
       <ImpactMap lines={allLines()} signs={home.signs} />
       <Journey />
+
+      {latestEvent && (
+        <section className="sec">
+          <h2>เหตุการณ์ล่าสุด</h2>
+          <Link href={`/event/${latestEvent.slug}`} className="item" style={{ display: "block", height: "auto", padding: "14px 16px" }}>
+            {getLine(latestEvent.lineId) && <LineBadge line={getLine(latestEvent.lineId)!} />}
+            <p className="small" style={{ marginTop: 8 }}>{thaiDateTime(latestEvent.updatedAt)}</p>
+            <b style={{ display: "block", marginTop: 4 }}>{latestEvent.title}</b>
+            <span className="small" style={{ display: "block", marginTop: 4 }}>{latestEvent.quick.what}</span>
+            {latestEvent.impacts.length > 0 && (
+              <div className="list" style={{ marginTop: 10 }}>
+                {/* หน้าแรกโชว์แค่หุ้นหลักของเรื่อง (quick.tickers) ไม่เอา impacts ทั้งหมดที่สะสมมา
+                    ป้องกันรายการยาวเกินไปสำหรับเหตุการณ์ที่ขยายผูกหุ้นเพิ่มทีหลัง (เช่น fed-rate-hike-tech) */}
+                {latestEvent.impacts
+                  .filter((i) => latestEvent.quick.tickers.includes(i.ticker))
+                  .map((i) => (
+                  <div key={i.ticker} className="stk-row static">
+                    <b>{i.ticker}</b>
+                    <span className={`pill ${i.exposure}`}>{EXPOSURE_SHORT[i.exposure]}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </Link>
+        </section>
+      )}
 
       <section className="sec">
         <h2>เรื่องอื่นที่ควรรู้</h2>
