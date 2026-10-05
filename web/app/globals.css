@@ -51,26 +51,13 @@ p{margin:0}
 @media (hover:hover){.chip:not(:disabled):hover{border-color:var(--ink2)}}
 .chip:disabled,.cta:disabled{opacity:.5;cursor:not-allowed}
 
-.map{width:100%;height:auto;display:block;margin-top:10px}
-.map .guide{stroke:var(--rule);stroke-width:1;stroke-dasharray:2 5}
-.map .rowlab{font-size:11px;fill:var(--ink2);font-family:var(--font-anuphan)}
-.map .line{cursor:pointer;transition:opacity .25s}
-.map .hit{fill:none;stroke:transparent;stroke-width:28}
-.map .trk{fill:none;stroke:var(--lc);stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:1;stroke-dashoffset:1;animation:draw 1s cubic-bezier(.4,0,.2,1) var(--d) forwards}
-.map .st{fill:var(--paper);stroke:var(--lc);stroke-width:3.5}
-.map .term{fill:var(--lc)}
-.map .dot{fill:var(--paper)}
-.map .lab{font-size:11.5px;font-family:var(--font-anuphan);fill:var(--ink);stroke:var(--paper);stroke-width:5px;paint-order:stroke;stroke-linejoin:round}
-.map .stk{fill:var(--paper);stroke-width:2.5}
-.map .stk.pos{stroke:var(--pos)}.map .stk.neg{stroke:var(--neg)}.map .stk.mix{stroke:var(--mix);stroke-dasharray:4 3}
-.map .tk{font-family:var(--font-chakra);font-weight:700;font-size:13px;fill:var(--ink)}
-.map .ex{font-size:11px;font-weight:600;font-family:var(--font-anuphan)}
-.map .ex.pos{fill:var(--pos)}.map .ex.neg{fill:var(--neg)}.map .ex.mix{fill:var(--mix)}
-.map .pop{opacity:0;animation:pop .35s ease-out calc(var(--d) + .75s) forwards}
-.map.pick-a .line:not([data-line="a"]),.map.pick-b .line:not([data-line="b"]),.map.pick-c .line:not([data-line="c"]){opacity:.14}
-@keyframes draw{to{stroke-dashoffset:0}}
-@keyframes pop{to{opacity:1}}
-@media (prefers-reduced-motion: reduce){.map .trk{animation:none;stroke-dashoffset:0}.map .pop{animation:none;opacity:1}.map .line{transition:none}}
+/* แถบสรุปสายโซ่ผลกระทบ (แบบ C) แทนแผนที่รถไฟฟ้า SVG เดิม — เลื่อนซ้าย-ขวาได้ในบรรทัดเดียว */
+.strip{display:flex;align-items:center;gap:8px;overflow-x:auto;margin-top:16px;padding-bottom:6px;scrollbar-width:none}
+.strip::-webkit-scrollbar{display:none}
+.strip .node{flex:0 0 auto;padding:8px 14px;border-radius:12px;background:var(--chalk);border:1px solid var(--rule);font-size:13px;white-space:nowrap}
+.strip .node.hd{font-weight:700;font-family:var(--font-chakra);color:var(--lc);border-color:var(--lc)}
+.strip .arrow{flex:0 0 auto;color:var(--rule);font-size:16px}
+.stripstocks{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--ink2);margin-top:6px}
 .legend span{display:flex;align-items:center;gap:6px}
 .legend i{width:16px;height:10px;border-radius:5px;border:2px solid}
@@ -131,7 +118,7 @@ p{margin:0}
 .stn .cf{font-size:12px;font-weight:600;margin-top:4px}
 .stkchip{display:inline-flex;align-items:center;gap:10px;padding:8px 14px;border-radius:14px;background:var(--paper);border:2.5px solid;text-decoration:none;color:var(--ink);min-height:44px}
 .stkchip b{font-family:var(--font-chakra);font-size:20px}
-.stkchip.pos{border-color:var(--pos)}.stkchip.neg{border-color:var(--neg)}
+.stkchip.pos{border-color:var(--pos)}.stkchip.neg{border-color:var(--neg)}.stkchip.mix{border-color:var(--mix);border-style:dashed}
 .keys{display:flex;flex-direction:column;gap:6px;margin-top:6px;font-size:12px;color:var(--ink2);padding:12px 14px;border-radius:14px;background:var(--paper);border:1px solid var(--rule)}
 .keys span{display:flex;align-items:center;gap:10px}
 .keys i{width:26px;border-top:5px solid var(--a)}
@@ -212,19 +199,15 @@ details.q .ans .small{display:block;margin-top:6px}
 
 /* hybrid: journey (quests + xp) */
 .journey{margin-top:24px;background:var(--paper);border:1px solid var(--rule);border-radius:24px;padding:16px 18px 18px}
-.jhead{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.streak{display:inline-flex;align-items:center;gap:6px;font-family:var(--font-chakra);font-weight:700;font-size:15px}
-.lvl{font-size:12px;color:var(--ink2);text-align:right}
-.lvl b{font-family:var(--font-chakra);color:var(--ink);font-size:14px}
-.jtitle{font-family:var(--font-chakra);font-weight:700;font-size:17px;margin-top:12px}
+.jtitle{font-family:var(--font-chakra);font-weight:700;font-size:17px}
 .jtrack{position:relative;margin:18px 14px 0;height:8px;border-radius:4px;background:var(--rule)}
 .jfill{position:absolute;left:0;top:0;bottom:0;width:100%;border-radius:4px;background:var(--a);transform:scaleX(0);transform-origin:left;transition:transform .6s cubic-bezier(.16,1,.3,1)}
 .jst{position:absolute;top:50%;width:26px;height:26px;margin:-13px 0 0 -13px;border-radius:50%;background:var(--paper);border:4px solid var(--rule);transition:border-color .3s,background .3s,transform .3s}
 .jst.done{border-color:var(--a);background:var(--a);transform:scale(1.1)}
 .jst.done::after{content:"";position:absolute;left:6px;top:4px;width:6px;height:10px;border-right:3px solid #fff;border-bottom:3px solid #fff;transform:rotate(40deg)}
-.jlabs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;font-size:12px;line-height:1.4}
+.jlabs{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:14px;font-size:12px;line-height:1.4}
 .jlabs div{display:flex;flex-direction:column;gap:2px}
-.jlabs div:nth-child(2){text-align:center}.jlabs div:nth-child(3){text-align:right}
+.jlabs>:last-child{text-align:right}
 .jlabs b{font-size:13px}.jlabs span{color:var(--ink2)}
 .jlabs .ok b{color:var(--ink2)}
 
