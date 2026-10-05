@@ -42,7 +42,7 @@ export function ImpactMap({ lines, signs }: { lines: Line[]; signs: MapSign[] })
 
   return (
     <section className="mapcard" aria-labelledby="maph">
-      <h2 id="maph">แผนที่ผลกระทบวันนี้</h2>
+      <h2 id="maph">ผลกระทบวันนี้</h2>
       <p className="hint">แต่ละสีคือหนึ่งเรื่องในตลาด แตะเพื่อดูว่าเรื่องนั้นไหลไปกระทบใคร</p>
       <div className="chips" role="group" aria-label="เลือกเรื่อง">
         {lines.map((l) => (

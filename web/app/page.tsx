@@ -2,7 +2,6 @@ import Link from "next/link";
 import type { CSSProperties } from "react";
 import { Footer } from "@/components/Footer";
 import { ImpactMap } from "@/components/ImpactMap";
-import { Journey } from "@/components/Journey";
 import { LineBadge, lineVar } from "@/components/LineBadge";
 import { Arrowed } from "@/components/Metric";
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -54,7 +53,6 @@ export default async function HomePage() {
       <PortfolioEntryCard />
 
       <ImpactMap lines={allLines()} signs={home.signs} />
-      <Journey />
 
       {latestEvent && (
         <section className="sec">
