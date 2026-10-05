@@ -269,9 +269,11 @@ export const getExposure = cache(async (slug: string, ticker: string): Promise<S
   return loadDbExposure(slug, ticker);
 });
 
-/** ใช้ใน generateStaticParams ของหน้า why-stock — ต้องรู้ล่วงหน้าว่ามี (event, ticker) คู่ไหนบ้าง */
-export async function allExposures(): Promise<StockExposure[]> {
-  const published = await publishedEvents();
+/** ใช้ใน generateStaticParams ของหน้า why-stock — ต้องรู้ล่วงหน้าว่ามี (event, ticker) คู่ไหนบ้าง
+ *  ส่ง `published` เข้ามาเองได้ (ทางเลือก) เหมือน storiesForTicker ด้านล่าง กันเรียก publishedEvents() ซ้ำ
+ *  ถ้าผู้เรียกดึงมาแล้วเองก่อนหน้า */
+export async function allExposures(published?: MarketEvent[]): Promise<StockExposure[]> {
+  published ??= await publishedEvents();
   const publishedSlugs = new Set(published.map((e) => e.slug));
   const fromSample = sample.exposures.filter((x) => publishedSlugs.has(x.eventSlug));
 
@@ -327,14 +329,23 @@ export interface RelatedStory {
  * events ซ้ำ 4 ครั้งไม่ใช่ 1 ครั้ง) ทำให้เวลารวมของคำขอยิ่งนานขึ้นเป็นเส้นตรงตามจำนวน ticker และเป็นสาเหตุจริง
  * ที่ `/api/portfolio` ล้มเหลวเมื่อ watchlist มีมากกว่า ~3 ticker บน Vercel จริง — ผู้เรียกที่วนหลาย ticker
  * ควร `await publishedEvents()` เองครั้งเดียวก่อน แล้วส่งผลลัพธ์เข้ามาที่นี่ ไม่ให้แต่ละ ticker ไปเรียกซ้ำเอง
+ *
+ * เดิมแก้แค่ฝั่ง events table (ด้านบน) แต่ยังเรียก getExposure(slug, ticker) ทีละคู่ต่อ ticker อยู่ดี ทำให้
+ * /search (วนครบ 35 บริษัททุกครั้งที่เปิดหน้า) และ /api/portfolio (วนตาม watchlist) ยังมีความเสี่ยงบั๊กคลาสเดียวกัน
+ * ซ้ำกับตารางนี้ (company_exposures) — ส่ง `exposures` (จาก exposureIndex()) เข้ามาเองได้เหมือนกัน เพื่อ query
+ * ตารางนี้ครั้งเดียวสำหรับทุก ticker ในคำขอเดียวกัน แทนที่จะให้แต่ละคู่ (event, ticker) ไป query แยกกันเอง
  */
-export async function storiesForTicker(ticker: string, published?: MarketEvent[]): Promise<RelatedStory[]> {
+export async function storiesForTicker(
+  ticker: string,
+  published?: MarketEvent[],
+  exposures?: Map<string, StockExposure>,
+): Promise<RelatedStory[]> {
   const events = published ?? (await publishedEvents());
   const fromEvents: RelatedStory[] = [];
   for (const e of events) {
     for (const i of e.impacts) {
       if (i.ticker !== ticker) continue;
-      const exposure = await getExposure(e.slug, ticker);
+      const exposure = exposures ? exposures.get(exposureKey(e.slug, ticker)) : await getExposure(e.slug, ticker);
       fromEvents.push({
         title: e.title,
         sub: `วันนี้, ${i.reason}`,
@@ -345,6 +356,16 @@ export async function storiesForTicker(ticker: string, published?: MarketEvent[]
     }
   }
   return [...fromEvents, ...(sample.relatedPlaceholders[ticker] ?? [])];
+}
+
+function exposureKey(slug: string, ticker: string): string {
+  return `${slug}::${ticker}`;
+}
+
+/** เรียก allExposures() ครั้งเดียวแล้วจัดเป็น Map ให้ storiesForTicker() เปิดดูได้ทันทีแบบไม่ query ซ้ำต่อ ticker */
+export async function exposureIndex(published?: MarketEvent[]): Promise<Map<string, StockExposure>> {
+  const rows = await allExposures(published);
+  return new Map(rows.map((x) => [exposureKey(x.eventSlug, x.ticker), x]));
 }
 
 export type { Template };
