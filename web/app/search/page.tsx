@@ -3,7 +3,7 @@ import { Footer } from "@/components/Footer";
 import { lineVar } from "@/components/LineBadge";
 import { dirClass } from "@/components/Metric";
 import { StockSearch, type SearchEntry } from "@/components/StockSearch";
-import { companies, getLine, getMetrics, publishedEvents, storiesForTicker } from "@/lib/data";
+import { companies, exposureIndex, getLine, getMetrics, publishedEvents, storiesForTicker } from "@/lib/data";
 import { fillTemplate } from "@/lib/format";
 
 export const metadata: Metadata = { title: "ค้นหุ้น" };
@@ -18,10 +18,13 @@ export default async function SearchPage() {
   // getMetrics() และ publishedEvents() เป็น DB call คนละตัวกัน ไม่เกี่ยวข้องกัน รันพร้อมกันได้ (เดิมรันทีละตัว
   // ทำให้เสียเวลาเชื่อมต่อ DB ซ้ำสองรอบโดยไม่จำเป็น)
   const [metrics, published] = await Promise.all([getMetrics(), publishedEvents()]);
+  // exposureIndex() query ตาราง company_exposures ครั้งเดียวสำหรับทุกบริษัท กันบั๊กคลาสเดียวกับด้านบนซ้ำ
+  // (เดิม storiesForTicker ยังเรียก getExposure ทีละคู่ event+ticker เองอยู่ แม้ publishedEvents จะ batch แล้ว)
+  const exposures = await exposureIndex(published);
   const entries: SearchEntry[] = await Promise.all(
     companies.map(async (c) => {
       const tpl = `{{${c.ticker}.ret_1d}}`;
-      const stories = await storiesForTicker(c.ticker, published);
+      const stories = await storiesForTicker(c.ticker, published, exposures);
       return {
         ticker: c.ticker,
         name: c.name,

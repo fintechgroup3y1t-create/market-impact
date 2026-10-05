@@ -7,7 +7,7 @@
 // ตอนนี้เรียก publishedEvents() เองครั้งเดียวตรงนี้ แล้วส่งผลลัพธ์เข้า storiesForTicker() ทุก ticker แทน
 import { NextResponse } from "next/server";
 import { lineVar } from "@/components/LineBadge";
-import { getCompany, getLine, publishedEvents, storiesForTicker } from "@/lib/data";
+import { exposureIndex, getCompany, getLine, publishedEvents, storiesForTicker } from "@/lib/data";
 
 export const dynamic = "force-dynamic";
 // route อื่นที่คุย DB หลาย query ในคำขอเดียว (/api/admin/seed, /api/admin/compute-sensitivity,
@@ -55,11 +55,14 @@ export async function GET(request: Request) {
   try {
     // ดึงเหตุการณ์ที่เผยแพร่แล้วครั้งเดียวสำหรับทุก ticker ในคำขอนี้ (ดูหมายเหตุด้านบนของไฟล์ว่าทำไมสำคัญ)
     const published = await publishedEvents();
+    // เช่นเดียวกัน — ดึง company_exposures ครั้งเดียวสำหรับทุก ticker แทนที่จะให้ storiesForTicker ไป query
+    // แยกทีละคู่ event+ticker เอง (บั๊กคลาสเดียวกับที่คอมเมนต์ด้านบนอธิบายไว้ แค่คนละตาราง ดู lib/data.ts)
+    const exposures = await exposureIndex(published);
     const items: PortfolioItem[] = await Promise.all(
       tickers.map(async (ticker) => {
         const company = getCompany(ticker);
         try {
-          const rawStories = await storiesForTicker(ticker, published);
+          const rawStories = await storiesForTicker(ticker, published, exposures);
           const stories: PortfolioStory[] = rawStories.map((s) => ({
             title: s.title,
             sub: s.sub,

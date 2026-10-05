@@ -2795,12 +2795,10 @@ export const companies: Company[] = [
 ];
 
 /** เรื่องอื่นที่เกี่ยวกับหุ้น (นอกจาก event หลัก) ใช้ในหน้าค้นหุ้น */
-export const relatedPlaceholders: Record<string, { title: string; sub: string; exposure: "pos" | "neg" | "mix"; lineId?: string }[]> = {
-  DAL: [
-    { title: "[เหตุการณ์ด้านการเดินทาง]", sub: "[วันที่], ความต้องการเดินทาง", exposure: "pos" },
-    { title: "[เหตุการณ์ด้านดอกเบี้ย]", sub: "[วันที่], ต้นทุนการกู้ยืม", exposure: "mix", lineId: "inflation" },
-  ],
-};
+// เดิม DAL มีตัวอย่าง placeholder ข้อความ "[เหตุการณ์...]" ที่ยังไม่มีเนื้อหาจริงอยู่ 2 รายการจากชิ้นที่ 1
+// (ตอนที่ยังไม่มีเหตุการณ์จริงผูกกับ DAL เลย) ตอนนี้ DAL มีเหตุการณ์จริงแล้ว (oil-supply, oil-mideast-tension)
+// ลบ placeholder ออกเพราะข้อความ "[...]" ที่ยังไม่กรอกจริงไม่ควรโชว์ปนกับเรื่องจริงในหน้าค้นหุ้น (เข้าใจผิดว่าเป็นข้อมูลจริง)
+export const relatedPlaceholders: Record<string, { title: string; sub: string; exposure: "pos" | "neg" | "mix"; lineId?: string }[]> = {};
 
 export const home: HomeData = {
   asOf: "2026-10-01T20:00:00+07:00",
