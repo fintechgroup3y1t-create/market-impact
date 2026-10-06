@@ -94,6 +94,34 @@ export default async function EventPage({ params }: Props) {
           </div>
         </Show>
 
+        {/* เดิมส่วนนี้อยู่ไว้ล่างสุดหลังเส้นทางผลกระทบ+แยกข้อเท็จจริง (ซึ่งแสดงทุกระดับเหมือนกัน)
+            ผลคือกด "เข้าใจ" กับ "เจาะลึก" แล้วเห็นเหมือนกันเป๊ะด้านบนจอ ต้องเลื่อนลงไปมากถึงจะเจอความต่าง
+            ย้ายมาไว้ติดกับ qa-list เลย ให้กดสลับระดับแล้วเห็นเนื้อหาที่เพิ่มขึ้นทันทีไม่ต้องเลื่อน */}
+        <Show at={["deep"]}>
+          <section className="sec">
+            <h2>เจาะลึก</h2>
+            <div className="tl">
+              {event.deep.timeline.map((t) => (
+                <div key={t.when + t.text} className="row">
+                  <span className="when">{t.when}</span>
+                  <span><T text={t.text} metrics={metrics} /></span>
+                </div>
+              ))}
+            </div>
+            <details className="q" open>
+              <summary>ในอดีตเกิดอะไรขึ้นในสถานการณ์คล้ายกัน</summary>
+              <div className="ans">
+                <T text={event.deep.history.text} metrics={metrics} />
+                <span className="small">{event.deep.history.note}</span>
+              </div>
+            </details>
+            <details className="q">
+              <summary>สิ่งที่ควรติดตามต่อ</summary>
+              <div className="ans">{event.deep.watch}</div>
+            </details>
+          </section>
+        </Show>
+
         <section className="sec">
           <h2>เส้นทางผลกระทบ</h2>
           <ChainRoutes chains={chains} lineColor={lineVar(line) ?? "var(--a)"} stockHref={hrefs} />
@@ -119,31 +147,6 @@ export default async function EventPage({ params }: Props) {
             ))}
           </div>
         </section>
-
-        <Show at={["deep"]}>
-          <section className="sec">
-            <h2>เจาะลึก</h2>
-            <div className="tl">
-              {event.deep.timeline.map((t) => (
-                <div key={t.when + t.text} className="row">
-                  <span className="when">{t.when}</span>
-                  <span><T text={t.text} metrics={metrics} /></span>
-                </div>
-              ))}
-            </div>
-            <details className="q" open>
-              <summary>ในอดีตเกิดอะไรขึ้นในสถานการณ์คล้ายกัน</summary>
-              <div className="ans">
-                <T text={event.deep.history.text} metrics={metrics} />
-                <span className="small">{event.deep.history.note}</span>
-              </div>
-            </details>
-            <details className="q">
-              <summary>สิ่งที่ควรติดตามต่อ</summary>
-              <div className="ans">{event.deep.watch}</div>
-            </details>
-          </section>
-        </Show>
       </DepthProvider>
 
       <section className="sec">
