@@ -64,25 +64,28 @@ export default async function HomePage() {
       </div>
 
       {other.length > 0 && (
-        <div className="list" style={{ marginTop: 4 }}>
-          {other.map((n) => (
-            <div key={n.url ?? n.title} className="item">
-              <span className="bar" />
-              <div>
-                <b>{n.title}</b>
-                <span className="small">{n.sourceName}{n.publishedAt && ` · ${thaiDateTime(n.publishedAt)}`}</span>
-                {n.url && (
-                  <>
-                    {" "}
-                    <a href={n.url} target="_blank" rel="noopener noreferrer">
-                      อ่านต้นฉบับ
-                    </a>
-                  </>
-                )}
+        <details className="fold">
+          <summary>ข่าวอื่นที่น่าสนใจ ({other.length})</summary>
+          <div className="list">
+            {other.map((n) => (
+              <div key={n.url ?? n.title} className="item">
+                <span className="bar" />
+                <div>
+                  <b>{n.title}</b>
+                  <span className="small">{n.sourceName}{n.publishedAt && ` · ${thaiDateTime(n.publishedAt)}`}</span>
+                  {n.url && (
+                    <>
+                      {" "}
+                      <a href={n.url} target="_blank" rel="noopener noreferrer">
+                        อ่านต้นฉบับ
+                      </a>
+                    </>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </details>
       )}
 
       <div className="pulse" aria-label="ภาพรวมตลาด ราคาปิดล่าสุด">

@@ -138,6 +138,15 @@ details.q .ans{padding:0 0 14px;font-size:14px}
 details.q .ans .small{display:block;margin-top:6px}
 @media (prefers-reduced-motion: reduce){details.q summary::after{transition:none}}
 
+/* ข่าวอื่นที่น่าสนใจ (หน้าแรก) — ยุบไว้เป็นค่าเริ่มต้น กดเพื่อดูทั้งหมด เคยโชว์แบบเปิดตลอดแล้วรายการยาวเกินไป
+   reuse ลูกศรหมุนแบบเดียวกับ details.q (FAQ) ด้านบน */
+.fold{margin-top:4px}
+.fold summary{min-height:44px;display:flex;align-items:center;gap:10px;font-weight:600;cursor:pointer;list-style:none;padding:8px 0;font-family:var(--font-chakra),var(--font-anuphan),sans-serif;font-size:14px}
+.fold summary::-webkit-details-marker{display:none}
+.fold summary::after{content:"";margin-left:auto;flex:none;width:9px;height:9px;border-right:2.5px solid var(--ink2);border-bottom:2.5px solid var(--ink2);transform:rotate(45deg);transition:transform .2s}
+.fold[open] summary::after{transform:rotate(-135deg)}
+@media (prefers-reduced-motion: reduce){.fold summary::after{transition:none}}
+
 .tl{margin-top:14px}
 .tl .row{display:grid;grid-template-columns:64px 1fr;gap:12px;padding:8px 0;border-left:0}
 .tl .when{font-family:var(--font-chakra);font-size:13px;color:var(--ink2)}
