@@ -88,62 +88,64 @@ export function PortfolioList({ metrics }: { metrics: MarketMetrics }) {
                 {!latest ? (
                   <p className="result-empty" style={{ marginTop: 14 }}>ยังไม่มีบทวิเคราะห์เชิงลึก (ข่าว/ความเสี่ยง) สำหรับหุ้นตัวนี้ ทีมงานจะทยอยเพิ่ม</p>
                 ) : (
-                  <div style={{ marginTop: 10 }}>
-                    <p className="small">บันทึกวิเคราะห์เมื่อ {thaiDayMonth(latest.date)}</p>
-                    <p style={{ fontSize: 14, marginTop: 6 }}>{latest.priceNote}</p>
+                  <details className="fold" style={{ marginTop: 10 }}>
+                    <summary>ดูวิเคราะห์เชิงลึก (อัปเดต {thaiDayMonth(latest.date)})</summary>
+                    <div>
+                      <p style={{ fontSize: 14, marginTop: 6 }}>{latest.priceNote}</p>
 
-                    {latest.news.length > 0 && (
-                      <>
-                        <h3 style={{ marginTop: 14 }}>ข่าวสำคัญล่าสุด</h3>
-                        <ul style={{ marginTop: 6, paddingLeft: 20, fontSize: 14 }}>
-                          {latest.news.map((n) => <li key={n} style={{ marginTop: 4 }}>{n}</li>)}
-                        </ul>
-                      </>
-                    )}
+                      {latest.news.length > 0 && (
+                        <>
+                          <h3 style={{ marginTop: 14 }}>ข่าวสำคัญล่าสุด</h3>
+                          <ul style={{ marginTop: 6, paddingLeft: 20, fontSize: 14 }}>
+                            {latest.news.map((n) => <li key={n} style={{ marginTop: 4 }}>{n}</li>)}
+                          </ul>
+                        </>
+                      )}
 
-                    {latest.analystNotes.length > 0 && (
-                      <>
-                        <h3 style={{ marginTop: 14 }}>มุมมองนักวิเคราะห์ภายนอก</h3>
-                        <ul style={{ marginTop: 6, paddingLeft: 20, fontSize: 14 }}>
-                          {latest.analystNotes.map((a) => {
-                            const sources = getEvidenceSample(a.evidenceIds);
-                            return (
-                              <li key={a.text} style={{ marginTop: 4 }}>
-                                {a.text}
-                                {sources.length > 0 && (
-                                  <span className="small" style={{ display: "block" }}>
-                                    อ้างอิง: {sources.map((s) => s.sourceName).join(", ")}
-                                  </span>
-                                )}
-                              </li>
-                            );
-                          })}
-                        </ul>
-                        <p className="note" style={{ marginTop: 6 }}>
-                          เป็นความเห็นของสำนักวิเคราะห์ที่ระบุไว้เท่านั้น ไม่ใช่คำแนะนำของเว็บนี้ และไม่ใช่คำแนะนำให้ซื้อหรือขาย
-                        </p>
-                      </>
-                    )}
+                      {latest.analystNotes.length > 0 && (
+                        <>
+                          <h3 style={{ marginTop: 14 }}>มุมมองนักวิเคราะห์ภายนอก</h3>
+                          <ul style={{ marginTop: 6, paddingLeft: 20, fontSize: 14 }}>
+                            {latest.analystNotes.map((a) => {
+                              const sources = getEvidenceSample(a.evidenceIds);
+                              return (
+                                <li key={a.text} style={{ marginTop: 4 }}>
+                                  {a.text}
+                                  {sources.length > 0 && (
+                                    <span className="small" style={{ display: "block" }}>
+                                      อ้างอิง: {sources.map((s) => s.sourceName).join(", ")}
+                                    </span>
+                                  )}
+                                </li>
+                              );
+                            })}
+                          </ul>
+                          <p className="note" style={{ marginTop: 6 }}>
+                            เป็นความเห็นของสำนักวิเคราะห์ที่ระบุไว้เท่านั้น ไม่ใช่คำแนะนำของเว็บนี้ และไม่ใช่คำแนะนำให้ซื้อหรือขาย
+                          </p>
+                        </>
+                      )}
 
-                    {latest.calendar.length > 0 && (
-                      <>
-                        <h3 style={{ marginTop: 14 }}>ปฏิทินที่ต้องจับตา</h3>
-                        <ul style={{ marginTop: 6, paddingLeft: 20, fontSize: 14 }}>
-                          {latest.calendar.map((c) => <li key={c.label} style={{ marginTop: 4 }}>{c.label}: {c.when}</li>)}
-                        </ul>
-                      </>
-                    )}
+                      {latest.calendar.length > 0 && (
+                        <>
+                          <h3 style={{ marginTop: 14 }}>ปฏิทินที่ต้องจับตา</h3>
+                          <ul style={{ marginTop: 6, paddingLeft: 20, fontSize: 14 }}>
+                            {latest.calendar.map((c) => <li key={c.label} style={{ marginTop: 4 }}>{c.label}: {c.when}</li>)}
+                          </ul>
+                        </>
+                      )}
 
-                    <h3 style={{ marginTop: 14 }}>วิเคราะห์ความเสี่ยง</h3>
-                    <p style={{ fontSize: 14 }}>ระดับโดยรวม: {latest.risk.level}</p>
-                    <ul style={{ marginTop: 6, paddingLeft: 20, fontSize: 14 }}>
-                      {latest.risk.points.map((p) => <li key={p} style={{ marginTop: 4 }}>{p}</li>)}
-                    </ul>
-                    <p style={{ fontSize: 14, marginTop: 8 }}>จุดแข็งที่ช่วยลดความเสี่ยง:</p>
-                    <ul style={{ marginTop: 6, paddingLeft: 20, fontSize: 14 }}>
-                      {latest.risk.strengths.map((s) => <li key={s} style={{ marginTop: 4 }}>{s}</li>)}
-                    </ul>
-                  </div>
+                      <h3 style={{ marginTop: 14 }}>วิเคราะห์ความเสี่ยง</h3>
+                      <p style={{ fontSize: 14 }}>ระดับโดยรวม: {latest.risk.level}</p>
+                      <ul style={{ marginTop: 6, paddingLeft: 20, fontSize: 14 }}>
+                        {latest.risk.points.map((p) => <li key={p} style={{ marginTop: 4 }}>{p}</li>)}
+                      </ul>
+                      <p style={{ fontSize: 14, marginTop: 8 }}>จุดแข็งที่ช่วยลดความเสี่ยง:</p>
+                      <ul style={{ marginTop: 6, paddingLeft: 20, fontSize: 14 }}>
+                        {latest.risk.strengths.map((s) => <li key={s} style={{ marginTop: 4 }}>{s}</li>)}
+                      </ul>
+                    </div>
+                  </details>
                 )}
               </section>
             );
