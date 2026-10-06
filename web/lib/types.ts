@@ -3,7 +3,7 @@
 // พอมีฐานข้อมูลจริงก็เปลี่ยนเฉพาะ lib/data.ts
 
 /** สีของ "สาย" อ้างถึงตัวแปร CSS --a / --b / --c */
-export type LineColor = "a" | "b" | "c";
+export type LineColor = "a" | "b" | "c" | "d";
 
 /** Positive / Negative / Mixed Exposure ห้ามใช้คำว่า "จะขึ้น" "จะลง" */
 export type Exposure = "pos" | "neg" | "mix";

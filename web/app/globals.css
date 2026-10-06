@@ -4,16 +4,16 @@
    มุมเล็กลงทั้งเว็บ (board tile ไม่ใช่การ์ดโค้งมน), ตัวเลขทุกตัวเป็น monospace แบบจอ LED */
 :root{
   --chalk:#EDEEEC;--paper:#FFFFFF;--ink:#14171A;--ink2:#5B6066;--rule:#D8DBDD;--navy:#1E2227;
-  --a:#B4720F;--b:#246B5B;--c:#9C2E42;--pos:#1E8A4C;--neg:#C4291E;--mix:#946A0E;
+  --a:#B4720F;--b:#246B5B;--c:#9C2E42;--d:#2E5FA3;--pos:#1E8A4C;--neg:#C4291E;--mix:#946A0E;
   color-scheme:light;box-sizing:border-box;
   padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){--chalk:#0B0D0F;--paper:#16191D;--ink:#ECEEEF;--ink2:#8B9094;--rule:#2A2E33;--navy:#353A40;
-  --a:#E8A23A;--b:#3FB39B;--c:#E06482;--pos:#4CC27A;--neg:#FF6B5E;--mix:#E0B23A;color-scheme:dark}
+  --a:#E8A23A;--b:#3FB39B;--c:#E06482;--d:#6FA0F2;--pos:#4CC27A;--neg:#FF6B5E;--mix:#E0B23A;color-scheme:dark}
 }
 :root[data-theme="dark"]{--chalk:#0B0D0F;--paper:#16191D;--ink:#ECEEEF;--ink2:#8B9094;--rule:#2A2E33;--navy:#353A40;
-  --a:#E8A23A;--b:#3FB39B;--c:#E06482;--pos:#4CC27A;--neg:#FF6B5E;--mix:#E0B23A;color-scheme:dark}
+  --a:#E8A23A;--b:#3FB39B;--c:#E06482;--d:#6FA0F2;--pos:#4CC27A;--neg:#FF6B5E;--mix:#E0B23A;color-scheme:dark}
 html{scroll-padding-top:env(safe-area-inset-top,0px);background:var(--chalk)}
 *,*::before,*::after{box-sizing:border-box}
 body{margin:0;background:var(--chalk);color:var(--ink);font-family:var(--font-anuphan),"Noto Sans Thai",Tahoma,sans-serif;font-size:15px;line-height:1.65;-webkit-text-size-adjust:100%;font-variant-numeric:tabular-nums}
