@@ -3,21 +3,24 @@
 // เหตุการณ์ใหม่ที่เขียนผ่านหน้าแอดมิน (ชิ้นที่ 5) เก็บในฐานข้อมูลจริง แล้ว "รวม" เข้ากับของตัวอย่างตอนแสดงผล
 // "ตัวเลข" (metrics) อ่านจากฐานข้อมูลจริงเสมอตั้งแต่ชิ้นที่ 2 (ดู app/api/cron/prices)
 
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, notInArray } from "drizzle-orm";
 import { cache } from "react";
 import { getDb, isDatabaseConfigured } from "@/db/client";
 import {
   claimEvidence as claimEvidenceTable,
   claims as claimsTable,
   companyExposures as companyExposuresTable,
+  documents as documentsTable,
   entities as entitiesTable,
   eventCompanyImpacts as eventCompanyImpactsTable,
+  eventDocuments as eventDocumentsTable,
   events as eventsTable,
   evidence as evidenceTable,
   explanations as explanationsTable,
   impactChainSteps as impactChainStepsTable,
   impactChains as impactChainsTable,
   marketMetrics as marketMetricsTable,
+  sources as sourcesTable,
 } from "@/db/schema";
 import * as sample from "./sample/data";
 import type {
@@ -366,6 +369,41 @@ function exposureKey(slug: string, ticker: string): string {
 export async function exposureIndex(published?: MarketEvent[]): Promise<Map<string, StockExposure>> {
   const rows = await allExposures(published);
   return new Map(rows.map((x) => [exposureKey(x.eventSlug, x.ticker), x]));
+}
+
+export interface OtherNewsItem {
+  title: string;
+  url: string | null;
+  sourceName: string;
+  publishedAt: string | null;
+}
+
+/**
+ * ข่าวที่ยังไม่ถูกผูกเข้ากับเหตุการณ์ในสายใดเลย (น้ำมัน/เงินเฟ้อ/ดอลลาร์) — ใช้แสดงในหน้าแรกส่วน
+ * "ข่าวอื่นที่น่าสนใจ" เป็นทางเลือกเบาสำหรับข่าวที่ไม่เข้า 3 สายหลักที่มีอยู่ (เช่น ภัยธรรมชาติ เหตุการณ์
+ * เฉพาะประเทศ ที่ยังไม่มีใครวิเคราะห์ผลกระทบต่อหุ้นเป็นเหตุการณ์เต็มรูปแบบ) ไม่มีสี ไม่มี chain ไม่ผูกหุ้น
+ * อ่านตรงจากตาราง documents/sources เดิม — ตารางเดียวกับที่ปุ่ม "ดึงข่าวใหม่ตอนนี้" ใน Admin เขียนอยู่แล้ว
+ * ไม่ใช่ตารางใหม่ กรอง document ที่ถูกผูกกับ event ไปแล้ว (ผ่าน event_documents) ออก เพราะนั่นแปลว่า
+ * ข่าวนั้นถูกจัดเข้าสายใดสายหนึ่งแล้วจริง ๆ ไม่ใช่ "ข่าวอื่น" อีกต่อไป
+ */
+export async function otherNews(limit = 5): Promise<OtherNewsItem[]> {
+  if (!isDatabaseConfigured()) return [];
+  try {
+    const db = getDb();
+    const used = await db.select({ id: eventDocumentsTable.documentId }).from(eventDocumentsTable);
+    const usedIds = used.map((u) => u.id);
+    const rows = await db
+      .select({ title: documentsTable.title, url: documentsTable.url, publishedAt: documentsTable.publishedAt, sourceName: sourcesTable.name })
+      .from(documentsTable)
+      .innerJoin(sourcesTable, eq(documentsTable.sourceId, sourcesTable.id))
+      .where(usedIds.length ? notInArray(documentsTable.id, usedIds) : undefined)
+      .orderBy(desc(documentsTable.publishedAt))
+      .limit(limit);
+    return rows.map((r) => ({ title: r.title, url: r.url, sourceName: r.sourceName, publishedAt: r.publishedAt?.toISOString() ?? null }));
+  } catch (err) {
+    console.error("otherNews: อ่านฐานข้อมูลไม่ได้", err);
+    return [];
+  }
 }
 
 export type { Template };
