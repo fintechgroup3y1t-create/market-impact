@@ -12,6 +12,7 @@ import type {
   MarketEvent,
   MarketMetrics,
   StockExposure,
+  StockUpdate,
 } from "../types";
 
 export const lines: Line[] = [
@@ -253,6 +254,72 @@ export const evidence: Evidence[] = [
     linkLabel: "อ่านต้นฉบับ",
     publishedAt: null,
     retrievedAt: "2026-10-06T21:00:00+07:00",
+  },
+  {
+    id: "ev-tikr-nvda-buyback-sept2026",
+    sourceName: "TIKR",
+    kind: "ข่าว",
+    note: "หลักฐานโดยตรง NVIDIA เพิ่มวงเงินซื้อคืนหุ้น 150 พันล้านดอลลาร์เมื่อ 28 ก.ย. 2026 ทำให้วงเงินคงเหลือรวมอยู่ที่ 235 พันล้านดอลลาร์ บริษัทระบุว่าเป็นการเพิ่มวงเงินซื้อคืนหุ้นครั้งใหญ่ที่สุดในประวัติศาสตร์",
+    url: "https://www.tikr.com/blog/nvidia-added-a-record-150-billion-to-its-buyback-heres-the-math-behind-spending-235-billion-by-early-2028",
+    linkLabel: "อ่านต้นฉบับ",
+    publishedAt: null,
+    retrievedAt: "2026-10-06T21:00:00+07:00",
+  },
+  {
+    id: "ev-finbold-nvda-morganstanley-oct2026",
+    sourceName: "Finbold (อ้างอิง Morgan Stanley)",
+    kind: "ข่าว",
+    note: "หลักฐานโดยตรง นักวิเคราะห์ Morgan Stanley (Joseph Moore) ตั้งราคาเป้าหมาย NVIDIA ไว้ที่ 300 ดอลลาร์ต่อหุ้น (ระยะ 12 เดือน) และเลือกเป็น \"top pick\" ในกลุ่มเซมิคอนดักเตอร์ สะท้อนมุมมองของนักวิเคราะห์สำนักนี้เท่านั้น ไม่ใช่คำแนะนำของเว็บนี้",
+    url: "https://finbold.com/morgan-stanley-sets-nvidia-stock-price-target-after-naming-it-a-top-pick/",
+    linkLabel: "อ่านต้นฉบับ",
+    publishedAt: null,
+    retrievedAt: "2026-10-06T21:00:00+07:00",
+  },
+  {
+    id: "ev-owner-nvda-update-2026-10-06",
+    sourceName: "ข้อมูลที่เจ้าของเว็บรวบรวมประจำวัน",
+    kind: "ข้อมูลตลาด",
+    note: "ราคาปิด/ระดับสูงสุดระหว่างวัน/Market Cap/ตัวเลขผลประกอบการ Q2 FY2027 ที่เจ้าของเว็บรวบรวมด้วยตนเองเมื่อ 6 ต.ค. 2026 ยังไม่ได้ตรวจสอบไขว้กับแหล่งข่าวอิสระโดยทีมงาน Claude Code — ใช้เป็นข้อมูลอ้างอิง ณ จุดเวลานั้น",
+    url: null,
+    linkLabel: "ไม่มีลิงก์ต้นฉบับ",
+    publishedAt: "2026-10-06T00:00:00+07:00",
+    retrievedAt: "2026-10-06T21:00:00+07:00",
+  },
+];
+
+export const stockUpdates: StockUpdate[] = [
+  {
+    ticker: "NVDA",
+    date: "2026-10-06",
+    priceNote:
+      "ปิดวันจันทร์ที่ 5 ต.ค. 2026 ที่ 238.90 ดอลลาร์ (+2.12%) ทำสถิติสูงสุดใหม่ระหว่างวันที่ 240.10 ดอลลาร์ ช่วงเช้าของวันที่ 6 ต.ค. (pre-market) อยู่ราว 240.50 ดอลลาร์ Market Cap ประมาณ 5.76-5.78 ล้านล้านดอลลาร์ — ใกล้เป็นบริษัทแรกของโลกที่ทะลุ 6 ล้านล้านดอลลาร์ (ต้องขึ้นอีกประมาณ 3.8%)",
+    news: [
+      "หุ้นทำสถิติสูงสุดใหม่ต่อเนื่อง แรงหนุนหลักมาจากดีมานด์ AI Infrastructure ที่ยังแข็งแรง",
+      "เพิ่มวงเงินซื้อคืนหุ้น 150 พันล้านดอลลาร์เมื่อ 28 ก.ย. 2026 ทำให้วงเงินคงเหลือรวมอยู่ที่ 235 พันล้านดอลลาร์ — ใหญ่ที่สุดในประวัติศาสตร์บริษัท",
+      "งบไตรมาสล่าสุด (Q2 FY2027) รายได้ 96.2 พันล้านดอลลาร์ เกินคาด และ guidance ไตรมาสถัดไปอยู่ที่ 105.8-110.1 พันล้านดอลลาร์",
+    ],
+    analystNotes: [
+      {
+        text: "Morgan Stanley (Joseph Moore) ตั้งราคาเป้าหมาย 12 เดือนไว้ที่ 300 ดอลลาร์ต่อหุ้น และเลือก NVIDIA เป็น \"top pick\" ในกลุ่มเซมิคอนดักเตอร์",
+        evidenceIds: ["ev-finbold-nvda-morganstanley-oct2026"],
+      },
+    ],
+    calendar: [{ label: "งบไตรมาสถัดไป (Q3)", when: "ประมาณ 17-18 พ.ย. 2026 (หลังตลาดปิด)" }],
+    risk: {
+      level: "ปานกลางถึงสูง",
+      points: [
+        "ราคาหุ้นผันผวนสูง มูลค่าตลาดใหญ่มาก",
+        "ความเสี่ยงจากการลงทุน AI Capex ของลูกค้าชะลอตัว",
+        "ข้อจำกัดส่งออกชิปไปจีน",
+        "การแข่งขันจากชิปที่ลูกค้าพัฒนาเอง (custom chip)",
+      ],
+      strengths: ["เงินสดในมือจำนวนมาก", "แผนซื้อคืนหุ้นขนาดใหญ่", "ยังครองส่วนแบ่งตลาดชิป AI อย่างชัดเจน"],
+    },
+    evidenceIds: [
+      "ev-tikr-nvda-buyback-sept2026",
+      "ev-finbold-nvda-morganstanley-oct2026",
+      "ev-owner-nvda-update-2026-10-06",
+    ],
   },
 ];
 

@@ -178,6 +178,20 @@ export interface MapSign {
   meta: string;
 }
 
+/** หน้าพอร์ต: บันทึกวิเคราะห์หุ้นรายตัวต่อวัน เขียนโดยทีมงาน/Claude Code ไม่ใช้ AI อัตโนมัติ
+ * ไม่มีราคาเป้าหมาย/คำแนะนำ BUY-SELL เป็นความเห็นของเว็บเอง — ถ้าอ้างถึงมุมมองนักวิเคราะห์ภายนอก
+ * ต้องระบุชื่อสำนักและผูกกับ evidence เสมอ (รายงานสิ่งที่คนอื่นพูด ไม่ใช่คำแนะนำของเว็บนี้) */
+export interface StockUpdate {
+  ticker: string;
+  date: string; // YYYY-MM-DD
+  priceNote: string; // ข้อเท็จจริงด้านราคา ณ วันที่ระบุ (ไม่ใช่ placeholder เพราะเป็นภาพรวมของวันนั้น ไม่ใช่ตัวเลขสด)
+  news: string[];
+  analystNotes: { text: string; evidenceIds: string[] }[];
+  calendar: { label: string; when: string }[];
+  risk: { level: string; points: string[]; strengths: string[] };
+  evidenceIds: string[];
+}
+
 export interface HomeData {
   asOf: string;
   mood: string;

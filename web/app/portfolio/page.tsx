@@ -1,142 +1,22 @@
-"use client";
+// Portfolio Impact: หน้า "พอร์ตของฉัน"
+// เดิมหน้านี้เป็น client component ล้วน ๆ (ดึงเหตุการณ์ที่เกี่ยวข้องผ่าน /api/portfolio — ดู git history)
+// เปลี่ยนตามคำขอของเจ้าของ (6 ต.ค. 2569): ตัดส่วน "เหตุการณ์ที่เกี่ยวข้อง" ออก เปลี่ยนเป็นหน้าวิเคราะห์หุ้นรายตัว
+// "ราคาล่าสุด" ต้องดึง metrics จริงจากฐานข้อมูล (ฟรี ผ่าน Tiingo ที่มีอยู่แล้ว ไม่ใช้ AI) ซึ่งทำได้เฉพาะฝั่งเซิร์ฟเวอร์เท่านั้น
+// (driver ของ Postgres ใช้ Node built-in ที่ bundle เข้า client component ไม่ได้) — จึงแยกเป็น 2 ชั้น:
+// ไฟล์นี้ (server component) ดึง metrics แล้วส่งเข้า PortfolioList (client component) ที่อ่าน watchlist จาก localStorage
 
-// Portfolio Impact เฟส 2-4: หน้า "พอร์ตของฉัน"
-// อ่าน watchlist จาก localStorage (WatchlistProvider) แล้วขอข้อมูลเหตุการณ์ที่เกี่ยวข้องจาก /api/portfolio
-// (endpoint ภายใน อ่านจากฐานข้อมูล/ข้อมูลตัวอย่างเดิมเท่านั้น ไม่เรียก Marketaux/Tiingo เพิ่ม)
-// หมายเหตุ: หน้านี้เป็น client component ล้วนเพื่ออ่าน localStorage ได้ จึงไม่มี export const metadata
-// (ข้อจำกัดเล็กน้อยที่ยอมรับไว้ แทนที่จะเพิ่มไฟล์ layout ใหม่เกินขอบเขตที่อนุมัติ)
-
-import Link from "next/link";
-import type { CSSProperties } from "react";
-import { useEffect, useReducer, useState } from "react";
 import { Footer } from "@/components/Footer";
-import { WatchlistButton } from "@/components/WatchlistButton";
-import { useWatchlist } from "@/components/WatchlistProvider";
-import { EXPOSURE_SHORT } from "@/lib/labels";
-import { fetchPortfolioItems, FetchTimeoutError, loadReducer } from "./load-state";
+import { PortfolioList } from "@/components/PortfolioList";
+import { getMetrics } from "@/lib/data";
 
-export default function PortfolioPage() {
-  const { tickers, hydrated } = useWatchlist();
-  const [state, dispatch] = useReducer(loadReducer, { status: "idle", items: [], error: null });
-  // เพิ่มค่าทุกครั้งที่กด "ลองใหม่" เพื่อบังคับให้ effect ด้านล่างรันใหม่แม้ tickerKey จะไม่เปลี่ยนเลย
-  const [retryToken, setRetryToken] = useState(0);
+// ราคาที่แสดงมาจากฐานข้อมูล อัปเดตทุกคืนผ่าน cron ให้หน้านี้สร้างใหม่เป็นระยะโดยไม่ต้อง deploy ใหม่
+export const revalidate = 1800;
 
-  const tickerKey = [...tickers].sort().join(",");
-
-  useEffect(() => {
-    if (!hydrated) return;
-    if (tickerKey === "") {
-      dispatch({ type: "empty" });
-      return;
-    }
-
-    const controller = new AbortController();
-    dispatch({ type: "start" });
-    fetchPortfolioItems(tickerKey, controller.signal)
-      .then((items) => dispatch({ type: "success", items }))
-      .catch((err) => {
-        // หมดเวลารอ (fetchPortfolioItems มี timeout ในตัว) — error จริง ต้องแจ้งผู้ใช้พร้อมปุ่มลองใหม่
-        if (err instanceof FetchTimeoutError) {
-          dispatch({ type: "error", message: err.message });
-          return;
-        }
-        // คำขอถูกยกเลิกเพราะ dependency เปลี่ยนหรือออกจากหน้าไปแล้ว ไม่ใช่ error จริง ไม่ต้องอัปเดตสถานะ
-        if (controller.signal.aborted) return;
-        dispatch({ type: "error", message: err instanceof Error ? err.message : "โหลดข้อมูลไม่สำเร็จ" });
-      });
-
-    return () => controller.abort();
-  }, [hydrated, tickerKey, retryToken]);
-
+export default async function PortfolioPage() {
+  const metrics = await getMetrics();
   return (
     <>
-      <h1 className="mood" style={{ marginTop: 22, fontSize: 34 }}>
-        พอร์ต
-        <br />
-        ของฉัน
-      </h1>
-      <p className="muted" style={{ marginTop: 8, fontSize: 14 }}>
-        หุ้นที่คุณติดตามไว้ และเหตุการณ์ที่เกี่ยวข้อง — เก็บไว้ในเบราว์เซอร์นี้เท่านั้น ยังไม่มีระบบสมาชิก
-      </p>
-
-      {!hydrated && <p className="muted" style={{ marginTop: 20 }}>กำลังโหลด...</p>}
-
-      {hydrated && tickers.length === 0 && (
-        <p className="result-empty" style={{ marginTop: 20 }}>
-          ยังไม่มีหุ้นในพอร์ต ไปที่{" "}
-          <Link href="/search" style={{ fontWeight: 700 }}>
-            หน้าค้นหุ้น
-          </Link>{" "}
-          แล้วกด &quot;เพิ่มเข้าพอร์ต&quot; ที่หุ้นที่สนใจ
-        </p>
-      )}
-
-      {hydrated && tickers.length > 0 && (state.status === "loading" || state.status === "idle") && (
-        <p className="muted" style={{ marginTop: 20 }}>กำลังโหลด...</p>
-      )}
-
-      {state.status === "error" && (
-        <p className="result-empty" style={{ marginTop: 20, borderColor: "var(--neg)" }}>
-          โหลดข้อมูลพอร์ตไม่สำเร็จ: {state.error} —{" "}
-          <button
-            type="button"
-            onClick={() => setRetryToken((n) => n + 1)}
-            style={{ fontWeight: 700, background: "none", border: "none", color: "var(--a)", cursor: "pointer", padding: 0, font: "inherit" }}
-          >
-            ลองใหม่
-          </button>
-        </p>
-      )}
-
-      {state.status === "done" && tickers.length > 0 && (
-        <div style={{ marginTop: 8 }}>
-          {state.items.map((item) => (
-            <section key={item.ticker} className="sec" style={{ marginTop: 18 }}>
-              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                <div>
-                  <div className="tick" style={{ marginTop: 0, fontSize: 28 }}>{item.ticker}</div>
-                  {item.name && <p className="small">{item.name}</p>}
-                </div>
-                <WatchlistButton ticker={item.ticker} />
-              </div>
-
-              {!item.covered ? (
-                <p className="result-empty" style={{ marginTop: 10 }}>ยังไม่มีข้อมูลรองรับหุ้นตัวนี้ (นอกความครอบคลุม 35 บริษัทปัจจุบัน)</p>
-              ) : item.stories.length === 0 ? (
-                <p className="result-empty" style={{ marginTop: 10 }}>ช่วงนี้ยังไม่มีเหตุการณ์ที่เกี่ยวข้องกับหุ้นตัวนี้</p>
-              ) : (
-                <div className="list" style={{ marginTop: 10 }}>
-                  {item.stories.map((st) => {
-                    const inner = (
-                      <>
-                        <span className="bar" style={{ "--lc": st.color ?? "var(--rule)" } as CSSProperties} />
-                        <div style={{ flex: 1 }}>
-                          <b>{st.title}</b>
-                          <span className="small">{st.sub}</span>
-                        </div>
-                        <span className={`pill ${st.exposure}`}>{EXPOSURE_SHORT[st.exposure]}</span>
-                      </>
-                    );
-                    return st.href ? (
-                      <Link key={st.title} className="item" href={st.href}>
-                        {inner}
-                      </Link>
-                    ) : (
-                      <div key={st.title} className="item">
-                        {inner}
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </section>
-          ))}
-        </div>
-      )}
-
-      <p className="note" style={{ marginTop: 20 }}>
-        ป้าย Positive/Negative/Mixed Exposure บอกทิศทางของผลกระทบที่วิเคราะห์ไว้ ไม่ใช่คำแนะนำให้ซื้อหรือขาย
-      </p>
+      <PortfolioList metrics={metrics} />
       <Footer />
     </>
   );

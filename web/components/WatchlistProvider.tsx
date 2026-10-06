@@ -92,7 +92,7 @@ export function PortfolioEntryCard() {
       <span className="bar" style={{ "--lc": "var(--navy)" } as React.CSSProperties} />
       <div>
         <b>พอร์ตของฉัน</b>
-        <span className="small">{hydrated && tickers.length > 0 ? `ติดตามอยู่ ${tickers.length} ตัว` : "เพิ่มหุ้นที่สนใจเพื่อดูเหตุการณ์ที่เกี่ยวข้อง"}</span>
+        <span className="small">{hydrated && tickers.length > 0 ? `ติดตามอยู่ ${tickers.length} ตัว` : "เพิ่มหุ้นที่สนใจเพื่อดูการวิเคราะห์รายตัว"}</span>
       </div>
     </Link>
   );
