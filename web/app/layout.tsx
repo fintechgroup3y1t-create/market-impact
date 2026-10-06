@@ -1,18 +1,17 @@
 import type { Metadata, Viewport } from "next";
-import { Bai_Jamjuree, Plus_Jakarta_Sans } from "next/font/google";
+import { Bai_Jamjuree, Martian_Mono } from "next/font/google";
 import "./globals.css";
 import { GameProvider } from "@/components/GameProvider";
 import { TabBar } from "@/components/TabBar";
 import { WatchlistProvider } from "@/components/WatchlistProvider";
 import { IS_SAMPLE_DATA } from "@/lib/data";
 
-// รีดีไซน์ทั้งหมดรอบที่ 2 (6 ต.ค. 2569): เปลี่ยนจาก "กระดานหุ้น LED" เป็นแนว Modern Fintech App
-// (การ์ดโค้งมน/กระจกฝ้า, เงา, สี gradient ม่วง-มินต์) ตามที่เจ้าของเลือก "Option B" จาก 2 ตัวอย่างที่เสนอ
-// เปลี่ยนฟอนต์ตัวเลข/หัวข้อจาก Martian Mono (ธีมจอ LED เดิม) เป็น Plus Jakarta Sans (เส้นสายเรขาคณิตหนาแน่น
-// แบบแอป fintech ทั่วไป ไม่มี subset ภาษาไทยเหมือนเดิม จึงยัง fallback ไป Bai Jamjuree อัตโนมัติ)
+// รีดีไซน์ทั้งหมด (6 ต.ค. 2569): เปลี่ยนแนวคิดจาก "แผนที่รถไฟฟ้า" เป็น "กระดานหุ้น" (ป้ายบอกราคาหุ้นที่โบรกเกอร์/ธนาคาร)
+// ตัวเลข/ticker ใช้ฟอนต์ monospace แบบจอ LED (Martian Mono ไม่มี subset ภาษาไทยเพราะใช้กับตัวเลข/อักษรอังกฤษเท่านั้น)
+// เนื้อหาภาษาไทยใช้ Bai Jamjuree (เส้นสายเหลี่ยมมุมตรงกับธีมกระดาน ไม่ใช่ Sarabun/Noto Sans Thai ทั่วไป)
 // ยังคง CSS variable name เดิม (--font-chakra, --font-anuphan) ไว้เพราะทั้งเว็บอ้างอิงชื่อนี้อยู่ทุกที่ เปลี่ยนแค่ฟอนต์จริงที่ผูกไว้
-const chakra = Plus_Jakarta_Sans({
-  weight: ["600", "700", "800"],
+const chakra = Martian_Mono({
+  weight: ["500", "600", "700"],
   subsets: ["latin"],
   variable: "--font-chakra",
   display: "swap",
@@ -34,8 +33,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#F5F4FC" },
-    { media: "(prefers-color-scheme: dark)", color: "#090B13" },
+    { media: "(prefers-color-scheme: light)", color: "#EDEEEC" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B0D0F" },
   ],
 };
 
