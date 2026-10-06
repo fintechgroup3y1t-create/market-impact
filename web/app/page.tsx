@@ -6,7 +6,7 @@ import { LineBadge, lineVar } from "@/components/LineBadge";
 import { Arrowed } from "@/components/Metric";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { PortfolioEntryCard } from "@/components/WatchlistProvider";
-import { allLines, getLine, getMetrics, home, publishedEvents } from "@/lib/data";
+import { allLines, getLine, getMetrics, home, otherNews, publishedEvents } from "@/lib/data";
 import { thaiDateTime, thaiDayMonth } from "@/lib/format";
 import { EXPOSURE_SHORT } from "@/lib/labels";
 
@@ -19,6 +19,9 @@ export default async function HomePage() {
   // เรื่องใหม่ลงหน้านี้ เหตุการณ์ที่เขียนผ่านหน้าแอดมินจะขึ้นมาที่นี่เองโดยเรียงจาก updatedAt ล่าสุด
   const published = await publishedEvents();
   const latestEvent = [...published].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
+  // ข่าวที่ยังไม่เข้า 3 สายหลัก (น้ำมัน/เงินเฟ้อ/ดอลลาร์) — ของจริงจากตาราง documents ไม่ใช่ sample
+  // เผื่อข่าวแบบ "น้ำท่วมไทย" ที่ยังไม่มีใครวิเคราะห์ผลกระทบต่อหุ้นเป็นเหตุการณ์เต็มรูปแบบ ดู lib/data.ts
+  const other = await otherNews();
   return (
     <>
       <header className="top">
@@ -59,6 +62,28 @@ export default async function HomePage() {
           );
         })}
       </div>
+
+      {other.length > 0 && (
+        <div className="list" style={{ marginTop: 4 }}>
+          {other.map((n) => (
+            <div key={n.url ?? n.title} className="item">
+              <span className="bar" />
+              <div>
+                <b>{n.title}</b>
+                <span className="small">{n.sourceName}{n.publishedAt && ` · ${thaiDateTime(n.publishedAt)}`}</span>
+                {n.url && (
+                  <>
+                    {" "}
+                    <a href={n.url} target="_blank" rel="noopener noreferrer">
+                      อ่านต้นฉบับ
+                    </a>
+                  </>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <div className="pulse" aria-label="ภาพรวมตลาด ราคาปิดล่าสุด">
         {home.pulse.map((p) => {
