@@ -24,6 +24,7 @@ const CHAINS: Record<string, { nodes: string[]; stocks: { ticker: string; exposu
   oil: { nodes: ["น้ำมันพุ่ง", "ต้นทุนพลังงานสูง", "พลังงาน / สายการบิน"], stocks: [{ ticker: "XOM", exposure: "pos" }, { ticker: "DAL", exposure: "neg" }] },
   inflation: { nodes: ["เฟดขึ้นดอกเบี้ย", "อัตราคิดลดสูงขึ้น", "หุ้นเทค"], stocks: [{ ticker: "NVDA", exposure: "mix" }] },
   dollar: { nodes: ["ดอลลาร์แข็งค่า", "ราคาทองคำถูกกดดัน", "เหมืองทอง"], stocks: [{ ticker: "NEM", exposure: "neg" }] },
+  ai: { nodes: ["บิ๊กเทคทุ่มงบลงทุน AI", "ความต้องการชิป/ไฟฟ้าพุ่งสูง", "เซมิคอนดักเตอร์ / สาธารณูปโภคไฟฟ้า"], stocks: [{ ticker: "NVDA", exposure: "pos" }, { ticker: "NEE", exposure: "pos" }] },
 };
 
 export function ImpactMap({ lines, signs }: { lines: Line[]; signs: MapSign[] }) {
