@@ -35,7 +35,30 @@ export default async function HomePage() {
       </header>
 
       <p className="date">{thaiDayMonth(home.asOf)} · ราคาปิดล่าสุด อัปเดตทุกคืนหลังตลาดสหรัฐฯ ปิด</p>
-      <h1 className="mood">{home.mood}</h1>
+      <h1 className="mood">วันนี้มีอะไรน่าสนใจบ้าง</h1>
+      {/* เดิมเป็นประโยคยาวประโยคเดียว (home.mood) เปลี่ยนเป็นหัวข้อย่อยทีละสายแทน อ่านเร็วกว่า
+          ดึงจาก home.signs ตัวเดียวกับที่ใช้ในแผนที่ผลกระทบด้านล่าง ไม่สร้างข้อมูลซ้ำ */}
+      <div className="list" style={{ marginTop: 14 }}>
+        {home.signs.map((s) => {
+          const line = getLine(s.lineId);
+          const style = { "--lc": lineVar(line) } as CSSProperties;
+          const inner = (
+            <>
+              <span className="bar" style={style} />
+              <b>{s.title}</b>
+            </>
+          );
+          return s.cta ? (
+            <Link key={s.lineId} className="item" href={s.cta.href}>
+              {inner}
+            </Link>
+          ) : (
+            <div key={s.lineId} className="item">
+              {inner}
+            </div>
+          );
+        })}
+      </div>
 
       <div className="pulse" aria-label="ภาพรวมตลาด ราคาปิดล่าสุด">
         {home.pulse.map((p) => {

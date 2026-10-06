@@ -1,18 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Anuphan, Chakra_Petch } from "next/font/google";
+import { Bai_Jamjuree, Martian_Mono } from "next/font/google";
 import "./globals.css";
 import { GameProvider } from "@/components/GameProvider";
 import { TabBar } from "@/components/TabBar";
 import { WatchlistProvider } from "@/components/WatchlistProvider";
 import { IS_SAMPLE_DATA } from "@/lib/data";
 
-const chakra = Chakra_Petch({
+// รีดีไซน์ทั้งหมด (6 ต.ค. 2569): เปลี่ยนแนวคิดจาก "แผนที่รถไฟฟ้า" เป็น "กระดานหุ้น" (ป้ายบอกราคาหุ้นที่โบรกเกอร์/ธนาคาร)
+// ตัวเลข/ticker ใช้ฟอนต์ monospace แบบจอ LED (Martian Mono ไม่มี subset ภาษาไทยเพราะใช้กับตัวเลข/อักษรอังกฤษเท่านั้น)
+// เนื้อหาภาษาไทยใช้ Bai Jamjuree (เส้นสายเหลี่ยมมุมตรงกับธีมกระดาน ไม่ใช่ Sarabun/Noto Sans Thai ทั่วไป)
+// ยังคง CSS variable name เดิม (--font-chakra, --font-anuphan) ไว้เพราะทั้งเว็บอ้างอิงชื่อนี้อยู่ทุกที่ เปลี่ยนแค่ฟอนต์จริงที่ผูกไว้
+const chakra = Martian_Mono({
   weight: ["500", "600", "700"],
-  subsets: ["latin", "thai"],
+  subsets: ["latin"],
   variable: "--font-chakra",
   display: "swap",
 });
-const anuphan = Anuphan({
+const anuphan = Bai_Jamjuree({
   weight: ["400", "500", "600", "700"],
   subsets: ["latin", "thai"],
   variable: "--font-anuphan",
@@ -29,8 +33,8 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#EEF1F4" },
-    { media: "(prefers-color-scheme: dark)", color: "#0D1420" },
+    { media: "(prefers-color-scheme: light)", color: "#EDEEEC" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B0D0F" },
   ],
 };
 

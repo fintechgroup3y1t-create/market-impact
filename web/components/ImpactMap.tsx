@@ -1,11 +1,13 @@
 "use client";
 
 // แผนที่ผลกระทบวันนี้
-// เดิมวาดเป็น SVG แผนที่รถไฟฟ้าทั้งหมด (ชิ้นที่ 1) เปลี่ยนตามที่เจ้าของเลือก (แบบ C จาก 3 แบบที่เสนอ)
-// เป็นแถบสรุปบรรทัดเดียวเลื่อนซ้าย-ขวาแทน กระชับกว่าเดิมมาก โหนดของแต่ละสายยังวาดไว้ตายตัวเหมือนเดิม
-// (ยังไม่ได้สร้างจาก impact_chains อัตโนมัติ เป็นข้อจำกัดเดิมที่ยังไม่แก้ในรอบนี้) เปลี่ยนแค่รูปแบบการแสดงผล
-// ไม่ได้เปลี่ยนเนื้อหา — โหนด/หุ้นต่อสายตรงกับที่เคยวาดในเวอร์ชัน SVG เป๊ะ
-// หมายเหตุ: ตัด legend จุดทึบ/วงกลวง/วงประ (fact/analysis/uncertainty) ออก เพราะ layout ใหม่ไม่มีสัญลักษณ์วงกลมพวกนี้แล้ว
+// รอบ 1: SVG แผนที่รถไฟฟ้าทั้งหมด (ชิ้นที่ 1)
+// รอบ 2: แถบสรุปบรรทัดเดียวเลื่อนซ้าย-ขวา (แบบ C จาก 3 แบบที่เสนอ) — เจ้าของแจ้งว่า "ดูยาก" (ข้อความถูกตัดขอบจอ
+// ไม่มีสัญญาณว่าเลื่อนได้ และไม่มีป้ายกำกับว่าแต่ละกล่องหมายถึงชั้นอะไร)
+// รอบ 3 (ตอนนี้): เปลี่ยนเป็นลำดับขั้นแนวตั้งมีป้ายกำกับชัดเจนทุกชั้น (เหตุการณ์/เศรษฐกิจ/อุตสาหกรรม/หุ้น)
+// reuse CSS class เดียวกับเส้นทางผลกระทบเต็มรูปแบบในหน้า "ทำไมถึงเป็นหุ้นตัวนี้" (.stn/.rail/.ly/.nm จาก ChainRoutes.tsx)
+// ให้หน้าตาสอดคล้องกันทั้งเว็บ ไม่ต้องสร้าง CSS ใหม่
+// โหนดของแต่ละสายยังวาดไว้ตายตัวเหมือนเดิม (ยังไม่ได้สร้างจาก impact_chains อัตโนมัติ เป็นข้อจำกัดเดิมที่ยังไม่แก้ในรอบนี้)
 
 import Link from "next/link";
 import type { CSSProperties } from "react";
@@ -15,6 +17,8 @@ import type { Exposure, Line, MapSign } from "@/lib/types";
 import { useGame } from "./GameProvider";
 
 type Css = CSSProperties & Record<`--${string}`, string>;
+
+const LAYER_LABELS = ["เหตุการณ์", "ผลต่อเศรษฐกิจ", "อุตสาหกรรม"];
 
 const CHAINS: Record<string, { nodes: string[]; stocks: { ticker: string; exposure: Exposure }[] }> = {
   oil: { nodes: ["น้ำมันพุ่ง", "ต้นทุนพลังงานสูง", "พลังงาน / สายการบิน"], stocks: [{ ticker: "XOM", exposure: "pos" }, { ticker: "DAL", exposure: "neg" }] },
@@ -53,21 +57,35 @@ export function ImpactMap({ lines, signs }: { lines: Line[]; signs: MapSign[] })
         ))}
       </div>
 
-      <div className="strip" style={{ "--lc": `var(--${pickedLine.color})` } as Css} role="group" aria-label={`สายโซ่ผลกระทบของ ${pickedLine.name}`}>
+      <div className="chain" style={{ "--lc": `var(--${pickedLine.color})` } as Css} role="group" aria-label={`สายโซ่ผลกระทบของ ${pickedLine.name}`}>
         {chain.nodes.map((node, i) => (
-          <span key={node} style={{ display: "contents" }}>
-            {i > 0 && <span className="arrow" aria-hidden="true">›</span>}
-            <span className={i === 0 ? "node hd" : "node"}>{node}</span>
-          </span>
+          <div key={node} className="stn">
+            <div className="rail">
+              <span className={i === 0 ? "c t" : "c"} />
+              {i < chain.nodes.length - 1 && <span className="s" />}
+            </div>
+            <div className="txt">
+              <div className="ly">{LAYER_LABELS[i]}</div>
+              <div className="nm">{node}</div>
+            </div>
+          </div>
         ))}
-      </div>
-      <div className="stripstocks">
-        {chain.stocks.map((s) => (
-          <span key={s.ticker} className={`stkchip ${s.exposure}`}>
-            <b>{s.ticker}</b>
-            <span>{EXPOSURE_SHORT[s.exposure]}</span>
-          </span>
-        ))}
+        <div className="stn">
+          <div className="rail">
+            <span className="c" />
+          </div>
+          <div className="txt">
+            <div className="ly">หุ้น</div>
+            <div className="nm" style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+              {chain.stocks.map((s) => (
+                <span key={s.ticker} className={`stkchip ${s.exposure}`}>
+                  <b>{s.ticker}</b>
+                  <span>{EXPOSURE_SHORT[s.exposure]}</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="legend" aria-label="คำอธิบายสัญลักษณ์">
