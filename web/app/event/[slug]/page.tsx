@@ -122,76 +122,82 @@ export default async function EventPage({ params }: Props) {
           </section>
         </Show>
 
-        <section className="sec">
-          <h2>เส้นทางผลกระทบ</h2>
-          <ChainRoutes chains={chains} lineColor={lineVar(line) ?? "var(--a)"} stockHref={hrefs} />
-          <div className="keys">
-            <span><i />เส้นทึบ หลักฐานแข็งแรง</span>
-            <span><i className="d" />เส้นประ มีปัจจัยที่อาจทำให้ผลต่างไป</span>
-          </div>
-        </section>
-
-        <section className="sec">
-          <h2>แยกให้ชัดว่าอะไรคือข้อเท็จจริง</h2>
-          <div className="fau">
-            {claimsWithSources.map((c) => (
-              <div key={c.text} className="r">
-                <span className={`mk ${CLAIM_LABEL[c.kind].mk}`} aria-hidden="true" />
-                <div>
-                  <div className="k">{CLAIM_LABEL[c.kind].name}</div>
-                  <p><T text={c.text} metrics={metrics} /></p>
-                  {c.note && <p className="s2">{c.note}</p>}
-                  {c.sourceNames.length > 0 && <p className="s2">หลักฐาน: {c.sourceNames.join(", ")}</p>}
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
-      </DepthProvider>
-
-      <section className="sec">
-        <h2>คำถามที่คนถามบ่อย</h2>
-        {event.faq.map((f) => (
-          <details key={f.q} className="q">
-            <summary>{f.q}</summary>
-            <div className="ans">
-              {f.a}
-              {f.link && (
-                <>
-                  {" "}
-                  <Link href={f.link.href}>{f.link.label}</Link>
-                </>
-              )}
-              {f.evidenceNote && <span className="small">{f.evidenceNote}</span>}
+        {/* ก่อนหน้านี้ 5 ส่วนนี้ (เส้นทางผลกระทบ, แยกข้อเท็จจริง, FAQ, หุ้นที่ได้รับผล, แหล่งอ้างอิง)
+            แสดงทุกระดับเหมือนกันหมด ทำให้กด "เร็ว" (สัญญาไว้ 15 วิ) แล้วยังเจอหน้ายาวเท่าเดิม
+            ตอนนี้ครอบด้วย Show ให้ "เร็ว" เหลือแค่ qa-list ด้านบนจริงๆ ส่วน "เข้าใจ"/"เจาะลึก" เห็นครบเหมือนเดิม
+            แหล่งอ้างอิงยังคงแสดงทุกระดับเสมอ (อยู่นอก DepthProvider) เพราะเป็นหลักฐานพื้นฐานที่ไม่ควรซ่อน */}
+        <Show at={["understand", "deep"]}>
+          <section className="sec">
+            <h2>เส้นทางผลกระทบ</h2>
+            <ChainRoutes chains={chains} lineColor={lineVar(line) ?? "var(--a)"} stockHref={hrefs} />
+            <div className="keys">
+              <span><i />เส้นทึบ หลักฐานแข็งแรง</span>
+              <span><i className="d" />เส้นประ มีปัจจัยที่อาจทำให้ผลต่างไป</span>
             </div>
-          </details>
-        ))}
-        <p className="small" style={{ marginTop: 8 }}>คำตอบเตรียมไว้ล่วงหน้าและตรวจโดยทีมงาน</p>
-      </section>
+          </section>
 
-      <section className="sec">
-        <h2>หุ้นที่ได้รับผล</h2>
-        <div className="list">
-          {event.impacts.map((i) => {
-            const href = stockHref(i.ticker);
-            const inner = (
-              <>
-                <b>{i.ticker}</b>
-                <span className="w">{i.reason}</span>
-                <span className={`pill ${i.exposure}`}>{EXPOSURE_SHORT[i.exposure]}</span>
-              </>
-            );
-            return href ? (
-              <Link key={i.ticker} className="stk-row" href={href}>{inner}</Link>
-            ) : (
-              <div key={i.ticker} className="stk-row static">{inner}</div>
-            );
-          })}
-        </div>
-        {event.impacts.some((i) => !stockHref(i.ticker)) && (
-          <p className="small" style={{ marginTop: 8 }}>หุ้นที่ไม่มีลิงก์ ยังไม่มีหน้าหลักฐานละเอียดในข้อมูลตัวอย่าง</p>
-        )}
-      </section>
+          <section className="sec">
+            <h2>แยกให้ชัดว่าอะไรคือข้อเท็จจริง</h2>
+            <div className="fau">
+              {claimsWithSources.map((c) => (
+                <div key={c.text} className="r">
+                  <span className={`mk ${CLAIM_LABEL[c.kind].mk}`} aria-hidden="true" />
+                  <div>
+                    <div className="k">{CLAIM_LABEL[c.kind].name}</div>
+                    <p><T text={c.text} metrics={metrics} /></p>
+                    {c.note && <p className="s2">{c.note}</p>}
+                    {c.sourceNames.length > 0 && <p className="s2">หลักฐาน: {c.sourceNames.join(", ")}</p>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+
+          <section className="sec">
+            <h2>คำถามที่คนถามบ่อย</h2>
+            {event.faq.map((f) => (
+              <details key={f.q} className="q">
+                <summary>{f.q}</summary>
+                <div className="ans">
+                  {f.a}
+                  {f.link && (
+                    <>
+                      {" "}
+                      <Link href={f.link.href}>{f.link.label}</Link>
+                    </>
+                  )}
+                  {f.evidenceNote && <span className="small">{f.evidenceNote}</span>}
+                </div>
+              </details>
+            ))}
+            <p className="small" style={{ marginTop: 8 }}>คำตอบเตรียมไว้ล่วงหน้าและตรวจโดยทีมงาน</p>
+          </section>
+
+          <section className="sec">
+            <h2>หุ้นที่ได้รับผล</h2>
+            <div className="list">
+              {event.impacts.map((i) => {
+                const href = stockHref(i.ticker);
+                const inner = (
+                  <>
+                    <b>{i.ticker}</b>
+                    <span className="w">{i.reason}</span>
+                    <span className={`pill ${i.exposure}`}>{EXPOSURE_SHORT[i.exposure]}</span>
+                  </>
+                );
+                return href ? (
+                  <Link key={i.ticker} className="stk-row" href={href}>{inner}</Link>
+                ) : (
+                  <div key={i.ticker} className="stk-row static">{inner}</div>
+                );
+              })}
+            </div>
+            {event.impacts.some((i) => !stockHref(i.ticker)) && (
+              <p className="small" style={{ marginTop: 8 }}>หุ้นที่ไม่มีลิงก์ ยังไม่มีหน้าหลักฐานละเอียดในข้อมูลตัวอย่าง</p>
+            )}
+          </section>
+        </Show>
+      </DepthProvider>
 
       <section className="sec" id="sources">
         <h2>แหล่งอ้างอิง</h2>

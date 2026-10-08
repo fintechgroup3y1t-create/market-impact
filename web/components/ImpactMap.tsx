@@ -11,10 +11,9 @@
 
 import Link from "next/link";
 import type { CSSProperties } from "react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { EXPOSURE_SHORT } from "@/lib/labels";
 import type { Exposure, Line, MapSign } from "@/lib/types";
-import { useGame } from "./GameProvider";
 
 type Css = CSSProperties & Record<`--${string}`, string>;
 
@@ -28,21 +27,13 @@ const CHAINS: Record<string, { nodes: string[]; stocks: { ticker: string; exposu
 };
 
 export function ImpactMap({ lines, signs }: { lines: Line[]; signs: MapSign[] }) {
-  const { seeLine } = useGame();
   const [picked, setPicked] = useState(lines[0].id);
   const pickedLine = lines.find((l) => l.id === picked)!;
   const sign = signs.find((s) => s.lineId === picked);
   const chain = CHAINS[picked];
 
-  // สายที่เลือกไว้ตั้งต้น (lines[0]) ก็ถือว่า "สำรวจแล้ว" เหมือนกัน ไม่ต้องรอให้ผู้ใช้แตะซ้ำ
-  useEffect(() => {
-    seeLine(lines[0].id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   function pick(id: string) {
     setPicked(id);
-    seeLine(id);
   }
 
   return (
