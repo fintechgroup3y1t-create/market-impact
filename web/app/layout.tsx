@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Bai_Jamjuree, Martian_Mono } from "next/font/google";
 import "./globals.css";
-import { GameProvider } from "@/components/GameProvider";
 import { TabBar } from "@/components/TabBar";
 import { WatchlistProvider } from "@/components/WatchlistProvider";
 import { IS_SAMPLE_DATA } from "@/lib/data";
@@ -51,14 +50,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         {IS_SAMPLE_DATA && (
           <p className="demo">ตัวอย่างสำหรับทดลอง ข้อมูลและตัวเลขทุกตัวในเว็บนี้เป็นข้อมูลสมมติ ไม่ใช่ราคาจริง</p>
         )}
-        <GameProvider>
-          <WatchlistProvider>
-            <main className="screen">
-              <div className="wrap">{children}</div>
-            </main>
-            <TabBar />
-          </WatchlistProvider>
-        </GameProvider>
+        <WatchlistProvider>
+          <main className="screen">
+            <div className="wrap">{children}</div>
+          </main>
+          <TabBar />
+        </WatchlistProvider>
       </body>
     </html>
   );

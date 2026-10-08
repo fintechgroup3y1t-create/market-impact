@@ -5,7 +5,6 @@ import type { CSSProperties } from "react";
 import { Fragment } from "react";
 import { BackBar } from "@/components/BackBar";
 import { Footer } from "@/components/Footer";
-import { MarkEvidenceOpened } from "@/components/GameProvider";
 import { dirClass, T } from "@/components/Metric";
 import { WatchlistButton } from "@/components/WatchlistButton";
 import { getCompany, getEvent, getExposure, getLine, getMetrics } from "@/lib/data";
@@ -40,7 +39,6 @@ export default async function WhyStockPage({ params }: Props) {
 
   return (
     <>
-      <MarkEvidenceOpened />
       <BackBar href={`/event/${slug}`} label="กลับไปหน้าเหตุการณ์" line={line} />
       <p className="small" style={{ marginTop: 14 }}>ทำไมเราถึงแสดงหุ้นตัวนี้</p>
       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>

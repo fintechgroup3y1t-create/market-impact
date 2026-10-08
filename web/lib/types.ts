@@ -162,13 +162,6 @@ export interface OtherStory {
   href?: string;
 }
 
-export interface Quiz {
-  question: string;
-  options: { text: string; correct: boolean }[];
-  explanation: string;
-  evidenceNote: string;
-}
-
 export interface MapSign {
   lineId: string;
   title: string;
@@ -197,6 +190,5 @@ export interface HomeData {
   mood: string;
   pulse: { label: string; metric: string }[];
   signs: MapSign[];
-  quiz: Quiz;
   others: OtherStory[];
 }

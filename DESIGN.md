@@ -13,7 +13,7 @@ colors:
   line-dollar: "#9C2E42"
   positive: "#1E8A4C"
   negative: "#C4291E"
-  mixed: "#946A0E"
+  mixed: "#9C4221"
 typography:
   display:
     fontFamily: "var(--font-chakra), var(--font-anuphan), sans-serif"
@@ -108,7 +108,7 @@ Neutrals carry the page; color is spent only where it means something specific.
 ### Tertiary — exposure semantics (fixed meaning, never repurposed)
 - **Positive Green** (`#1E8A4C`): Positive Exposure only — the real ticker-board "up" color.
 - **Negative Red** (`#C4291E`): Negative Exposure only — the real ticker-board "down" color.
-- **Mixed Amber-Brown** (`#946A0E`): Mixed Exposure only; pairs with a dashed stroke, not just the color. Deliberately a different amber from the Oil line / UI-accent amber so the two jobs never read as the same color.
+- **Mixed Terracotta-Brown** (`#9C4221`): Mixed Exposure only; pairs with a dashed stroke, not just the color. Deliberately a different hue from the Oil line / UI-accent amber (shifted toward red-brown, not just darker) so the two jobs never read as the same color — confirmed by RGB distance in both themes (light ~57 units, dark ~45 units apart from Oil Amber), not just eyeballed in one theme.
 
 ### Neutral
 - **Chalk** (`#EDEEEC`): page background — a cool paper grey (ledger-paper, not cream).
@@ -195,7 +195,7 @@ These three shapes are the system's most load-bearing signature, carried over un
 
 ### Don't:
 - **Don't** introduce a new accent color outside the three line colors and three exposure colors — Navy and the neutrals are the only other spend the palette allows.
-- **Don't** use green/red/amber-brown for anything other than Positive/Negative/Mixed Exposure, even decoratively — Oil Amber (the UI accent) is a deliberately different shade from Mixed Amber-Brown so the two never get confused.
+- **Don't** use green/red/terracotta-brown for anything other than Positive/Negative/Mixed Exposure, even decoratively — Oil Amber (the UI accent) is a deliberately different hue from Mixed Terracotta-Brown so the two never get confused.
 - **Don't** add shadows anywhere — the system is flat by contract now, with no gamified exception left in the product.
 - **Don't** use a fully soft pill (`999px`) or fully sharp (`0px`) corner anywhere — the board-tile language is the small-but-not-zero middle ground.
 - **Don't** widen the core content column into a conventional multi-column desktop layout.

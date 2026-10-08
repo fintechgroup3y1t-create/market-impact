@@ -1,8 +1,7 @@
 "use client";
 
 // Portfolio Impact เฟส 1: watchlist เก็บใน localStorage ของเบราว์เซอร์ผู้ใช้เท่านั้น
-// (ยังไม่มีระบบสมาชิกตาม CLAUDE.md — รูปแบบเดียวกับ XP ใน GameProvider.tsx)
-// แยกคีย์ localStorage คนละตัวกับ XP เด็ดขาด ไม่ปนกัน
+// (ยังไม่มีระบบสมาชิกตาม CLAUDE.md)
 
 import Link from "next/link";
 import { createContext, useCallback, useContext, useEffect, useState } from "react";
