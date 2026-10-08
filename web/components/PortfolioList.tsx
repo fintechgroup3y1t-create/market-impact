@@ -93,6 +93,12 @@ export function PortfolioList({ metrics }: { metrics: MarketMetrics }) {
                     <div>
                       <p style={{ fontSize: 14, marginTop: 6 }}>{latest.priceNote}</p>
 
+                      {company?.covered && (
+                        <p className="small" style={{ marginTop: 10 }}>
+                          &quot;ต่างจากตลาด&quot; ที่เห็นด้านบนคือผลตอบแทนของหุ้นตัวนี้หักด้วยผลตอบแทนของดัชนี S&amp;P 500 วันเดียวกัน (abnormal return) — ถ้าติดลบ แปลว่าหุ้นตัวนี้ร่วงมากกว่าตลาดโดยรวม ถ้าเป็นบวก แปลว่าทำได้ดีกว่าตลาด ตัวเลขนี้คำนวณโดยระบบจากราคาจริงเท่านั้น ไม่ได้พิสูจน์ว่าข่าวหรือเหตุการณ์ใดเป็นสาเหตุของการเคลื่อนไหว
+                        </p>
+                      )}
+
                       {latest.news.length > 0 && (
                         <>
                           <h3 style={{ marginTop: 14 }}>ข่าวสำคัญล่าสุด</h3>
