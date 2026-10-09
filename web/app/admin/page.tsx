@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import AdminEventForm, { type FormEventPayload } from "@/components/AdminEventForm";
+import { thaiDateTime } from "@/lib/format";
 
 const STORAGE_KEY = "mi_admin_secret";
 
@@ -23,6 +24,7 @@ interface NewsItem {
   title: string;
   url: string;
   publishedAt: string;
+  retrievedAt: string | null;
   sourceName: string;
 }
 
@@ -392,7 +394,10 @@ export default function AdminPage() {
                 <div>
                   <a href={n.url} target="_blank" rel="noreferrer" style={{ fontWeight: 600 }}>{n.title}</a>
                   <br />
-                  <span className="small">{n.sourceName}</span>
+                  <span className="small">
+                    {n.sourceName}
+                    {n.retrievedAt && ` · ดึงมาเมื่อ ${thaiDateTime(n.retrievedAt)}`}
+                  </span>
                 </div>
                 {confirmDeleteId === n.id ? (
                   <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>

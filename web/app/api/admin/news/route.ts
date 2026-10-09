@@ -1,4 +1,6 @@
 // รายการข่าวล่าสุดที่ดึงมาเก็บไว้ (ให้แอดมินอ่านประกอบตอนเขียนเหตุการณ์)
+// เรียงตาม retrievedAt (เวลาที่ระบบดึงมา) ไม่ใช่ publishedAt (เวลาที่ข่าวเผยแพร่ครั้งแรก) เพื่อให้ข่าวที่เพิ่งกด
+// "ดึงข่าวใหม่ตอนนี้" ขึ้นบนสุดเสมอ แยกออกจากข่าวเก่าได้ชัดเจน (publishedAt เก่าใหม่ปนกันได้เพราะขึ้นกับตัวข่าวเอง)
 // DELETE: ลบข่าวที่ไม่ต้องการออกจากรายการ (เช่น ไม่เกี่ยวข้อง/รกเกินไป) — ลบไม่ได้ถ้าข่าวนั้นถูกผูกเป็นหลักฐานของเหตุการณ์ไปแล้ว (กัน FK พัง)
 
 import { desc, eq } from "drizzle-orm";
@@ -28,7 +30,7 @@ export async function GET(request: Request) {
     .from(documents)
     .innerJoin(sources, eq(documents.sourceId, sources.id))
     .where(eq(documents.docType, "news"))
-    .orderBy(desc(documents.publishedAt))
+    .orderBy(desc(documents.retrievedAt))
     .limit(50);
   return NextResponse.json({ news: rows }, { headers: { "Cache-Control": "no-store" } });
 }
