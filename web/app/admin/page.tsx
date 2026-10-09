@@ -19,6 +19,7 @@ interface EventSummary {
 }
 
 interface NewsItem {
+  id: number;
   title: string;
   url: string;
   publishedAt: string;
@@ -165,6 +166,23 @@ export default function AdminPage() {
 
   async function createEventFromForm(payload: FormEventPayload) {
     await submitPayload(payload);
+  }
+
+  async function deleteNews(id: number) {
+    if (!confirm("ลบข่าวนี้ออกจากรายการ?")) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`/api/admin/news?id=${id}`, { method: "DELETE", headers: headers() });
+      const data = await res.json();
+      if (!res.ok || !data.ok) throw new Error(data.error ?? "ไม่ทราบสาเหตุ");
+      setMessage("ลบข่าวแล้ว");
+      await refresh();
+    } catch (err) {
+      setMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function fetchNewsNow() {
@@ -373,6 +391,9 @@ export default function AdminPage() {
                   <br />
                   <span className="small">{n.sourceName}</span>
                 </div>
+                <button type="button" className="chip" disabled={busy} onClick={() => deleteNews(n.id)} style={{ flexShrink: 0 }}>
+                  ลบ
+                </button>
               </div>
             ))}
           </div>
