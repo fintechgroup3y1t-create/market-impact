@@ -60,6 +60,9 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<NewsItem[] | null>(null);
   const [backtestResult, setBacktestResult] = useState<string | null>(null);
+  // กดลบข่าวต้องกดยืนยันอีกครั้ง — ใช้ state เองแทน window.confirm() เพราะเบราว์เซอร์ในแอป (เช่น Line/Facebook webview)
+  // มักบล็อก confirm() เงียบ ๆ แล้วตอบ "ยกเลิก" ทันทีโดยไม่โชว์กล่องให้กดเลย ทำให้ลบไม่ได้แม้กดปุ่มแล้ว
+  const [confirmDeleteId, setConfirmDeleteId] = useState<number | null>(null);
   const [companies, setCompanies] = useState<{ ticker: string; name: string }[]>([]);
 
   useEffect(() => {
@@ -169,7 +172,6 @@ export default function AdminPage() {
   }
 
   async function deleteNews(id: number) {
-    if (!confirm("ลบข่าวนี้ออกจากรายการ?")) return;
     setBusy(true);
     setMessage(null);
     try {
@@ -182,6 +184,7 @@ export default function AdminPage() {
       setMessage(`เกิดข้อผิดพลาด: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setBusy(false);
+      setConfirmDeleteId(null);
     }
   }
 
@@ -391,9 +394,20 @@ export default function AdminPage() {
                   <br />
                   <span className="small">{n.sourceName}</span>
                 </div>
-                <button type="button" className="chip" disabled={busy} onClick={() => deleteNews(n.id)} style={{ flexShrink: 0 }}>
-                  ลบ
-                </button>
+                {confirmDeleteId === n.id ? (
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
+                    <button type="button" className="chip" disabled={busy} onClick={() => deleteNews(n.id)} style={{ borderColor: "var(--neg)", color: "var(--neg)" }}>
+                      ยืนยันลบ
+                    </button>
+                    <button type="button" className="chip" disabled={busy} onClick={() => setConfirmDeleteId(null)}>
+                      ยกเลิก
+                    </button>
+                  </div>
+                ) : (
+                  <button type="button" className="chip" disabled={busy} onClick={() => setConfirmDeleteId(n.id)} style={{ flexShrink: 0 }}>
+                    ลบ
+                  </button>
+                )}
               </div>
             ))}
           </div>
